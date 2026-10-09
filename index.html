@@ -134,8 +134,8 @@
           <div class="form-group">
             <label>英文單字</label>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <input type="text" id="word-spelling" required placeholder="例如: run" style="flex: 1; min-width: 180px;">
-              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 自動帶入所有詞性與解釋</button>
+              <input type="text" id="word-spelling" required placeholder="例如: try, ice, run" style="flex: 1; min-width: 180px;">
+              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 多源智慧聚合帶入</button>
               <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openQuickLookup()">🔍 查劍橋字典</button>
             </div>
             <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;"></div>
@@ -148,12 +148,12 @@
 
           <div class="form-group">
             <label>完整釋義與對應詞性 (支援多重意義與英英解釋)</label>
-            <textarea id="word-meaning" rows="6" required placeholder="系統會自動依詞性帶入，您也可以手動補充..."></textarea>
+            <textarea id="word-meaning" rows="6" required placeholder="系統會自動依詞性與多重資料庫帶入，您也可以手動補充..."></textarea>
           </div>
 
           <div class="form-group">
             <label>相關例句 (用於克漏字測驗)</label>
-            <textarea id="word-sentence" rows="4" placeholder="• He likes to run in the morning."></textarea>
+            <textarea id="word-sentence" rows="4" placeholder="• He likes to try new things."></textarea>
           </div>
 
           <button type="submit" class="btn" style="width: 100%;">💾 儲存並同步至雲端專屬分頁</button>
@@ -228,7 +228,7 @@
   </div>
 
   <script>
-    // ⚠️ 請將下方引號內的網址換成你剛剛從 Apps Script 部署取得的「網頁應用程式網址」
+    // 🌟 已內建你的專屬 Apps Script 部署網址
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
@@ -286,7 +286,7 @@
       currentUser = "";
       vocabData = [];
       document.getElementById("current-user-display").innerText = "未登入";
-      document.getElementById("auth-section").classList.add("hidden");
+      document.getElementById("auth-section").classList.remove("hidden");
       document.getElementById("app-nav").classList.add("hidden");
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
       document.getElementById("auth-msg").innerText = "";
@@ -353,9 +353,10 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🚀 【核心升級】多詞性與完整釋義自動帶入
+    // 🌟 【多源智慧聚合引擎】結合 Free Dictionary API 與 Google 翻譯互補
     async function autoFetchDetails() {
-      const word = document.getElementById("word-spelling").value.trim().toLowerCase();
+      const wordInput = document.getElementById("word-spelling");
+      const word = wordInput.value.trim().toLowerCase();
       const msg = document.getElementById("auto-fetch-msg");
       const btn = document.getElementById("auto-fetch-btn");
       const originalText = btn.innerHTML;
@@ -363,53 +364,90 @@
       if (!word) return alert("請先輸入英文單字！");
 
       btn.disabled = true;
-      btn.innerHTML = `<span class="spin-icon">⏳</span> 抓取中...`;
-      msg.innerText = "⏳ 正在向權威字典查詢各詞性與多重定義...";
+      btn.innerHTML = `<span class="spin-icon">⏳</span> 聚合檢索中...`;
+      msg.innerText = "⏳ 正在同時向權威詞典與 Google 翻譯請求數據...";
       msg.style.color = "var(--primary)";
 
-      try {
-        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!res.ok) throw new Error("查無此單字");
+      let phoneticStr = "";
+      let posSet = new Set();
+      let meaningBlocks = [];
+      let sentences = [];
+      let chineseTranslation = "";
+      let hasData = false;
 
-        const data = await res.json();
-        const first = data[0];
-        
-        let phoneticStr = first.phonetic || (first.phonetics ? (first.phonetics.find(p => p.text)?.text || "") : "");
-        let posList = [];
-        let meaningBlocks = [];
-        let sentences = [];
+      // 同時發起多個來源請求
+      const [dictResult, translateResult] = await Promise.allSettled([
+        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null),
+        fetch(`${GAS_API_URL}?action=translate&word=${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null)
+      ]);
 
-        if (phoneticStr) meaningBlocks.push(`【音標】${phoneticStr}\n`);
+      // 1. 解析字典 API
+      if (dictResult.status === 'fulfilled' && dictResult.value && dictResult.value.length > 0) {
+        hasData = true;
+        const first = dictResult.value[0];
+
+        if (first.phonetic) {
+          phoneticStr = first.phonetic;
+        } else if (first.phonetics && first.phonetics.length > 0) {
+          const pObj = first.phonetics.find(p => p.text);
+          if (pObj) phoneticStr = pObj.text;
+        }
 
         if (first.meanings) {
           first.meanings.forEach(m => {
             const p = m.partOfSpeech || "other";
-            posList.push(p);
+            posSet.add(p);
             
-            meaningBlocks.push(`🔹 [${p}]`);
-            m.definitions.forEach((d, idx) => {
-              meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
-              if (d.example) sentences.push(`• ${d.example}`);
-            });
-            meaningBlocks.push(""); // 空行隔開
+            meaningBlocks.push(`🔹 [${p.toUpperCase()}]`);
+            if (m.definitions) {
+              m.definitions.forEach((d, idx) => {
+                meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
+                if (d.example) sentences.push(`• ${d.example}`);
+              });
+            }
+            meaningBlocks.push(""); 
           });
         }
+      }
 
-        document.getElementById("word-pos").value = [...new Set(posList)].join(", ");
-        document.getElementById("word-meaning").value = meaningBlocks.join("\n").trim();
-        if (sentences.length > 0) {
-          document.getElementById("word-sentence").value = sentences.slice(0, 3).join("\n");
+      // 2. 解析翻譯互補
+      if (translateResult.status === 'fulfilled' && translateResult.value) {
+        const tData = translateResult.value;
+        if (tData.status === "success" && tData.translation) {
+          hasData = true;
+          chineseTranslation = tData.translation;
+        }
+      }
+
+      // 3. 組合與排版
+      if (hasData) {
+        let finalOutput = "";
+
+        if (phoneticStr) finalOutput += `【音標】 ${phoneticStr}\n\n`;
+        if (chineseTranslation) finalOutput += `【中文核心直譯】 ${chineseTranslation}\n\n`;
+        if (meaningBlocks.length > 0) {
+          finalOutput += `【多源詞性與詳細釋義】\n` + meaningBlocks.join("\n").trim();
         }
 
-        msg.innerText = "✅ 各詞性與詳細解釋帶入成功！您可以手動補充更多內容。";
+        document.getElementById("word-pos").value = [...posSet].join(", ") || "n./v.";
+        document.getElementById("word-meaning").value = finalOutput.trim();
+        
+        if (sentences.length > 0) {
+          const uniqueSentences = [...new Set(sentences)];
+          document.getElementById("word-sentence").value = uniqueSentences.slice(0, 3).join("\n");
+        } else {
+          document.getElementById("word-sentence").value = `• This is an example sentence for ${word}.`;
+        }
+
+        msg.innerText = "✨ 多源智慧聚合成功！已結合詞典與翻譯數據。";
         msg.style.color = "var(--success)";
-      } catch (err) {
-        msg.innerText = "❌ 字典庫無此單字，請手動輸入意義與詞性。";
+      } else {
+        msg.innerText = "❌ 各大資料庫皆查無此單字，請使用右側按鈕至劍橋字典查詢並手動補充。";
         msg.style.color = "var(--danger)";
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
       }
+
+      btn.disabled = false;
+      btn.innerHTML = originalText;
     }
 
     async function addWord(e) {
@@ -554,7 +592,6 @@
         renderOptions(q, 'meaning');
       } 
       else if (currentQuizType === 'cloze') {
-        // 🌟 進階語境克漏字測驗
         let targetSentence = q.sentence ? q.sentence.replace(/^•\s*/, '') : "";
         if (!targetSentence) {
           targetSentence = `(無例句提示) 解釋：${q.meaning.split('\n')[0]}`;
