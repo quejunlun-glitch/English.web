@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocabMaster - 雲端深度單字庫</title>
+  <title>VocabMaster - 雲端多源開源詞典整合版</title>
   <style>
     :root {
       --primary: #4f46e5;
@@ -54,7 +54,6 @@
     .badge-pos { background: var(--primary-light); color: var(--primary); }
     .badge-error { background: #fee2e2; color: var(--danger); }
 
-    /* 測驗區塊 */
     .quiz-container { text-align: center; }
     .quiz-type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
     .type-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 1rem; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.95rem; }
@@ -63,7 +62,6 @@
     .option-btn { padding: 1rem; font-size: 1rem; background: #f8fafc; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 600; text-align: left; }
     .option-btn:hover { background: var(--primary-light); border-color: var(--primary); }
 
-    /* 編輯 Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 1.5rem; border-radius: var(--radius); width: 90%; max-width: 500px; box-shadow: var(--shadow); }
 
@@ -89,7 +87,7 @@
     <!-- 🔐 登入 / 註冊區塊 -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0;">🔐 雲端單字庫 - 登入 / 註冊</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">每個帳號均擁有獨立的 Google 試算表分頁與完整學習紀錄。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">獨立分頁隔離、高質量開源詞庫支援。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -129,13 +127,13 @@
     <!-- ➕ 新增單字 -->
     <div id="add-tab" class="tab-content hidden">
       <div class="card">
-        <h2 style="margin-top:0;">➕ 新增單字與多重詞性釋義</h2>
+        <h2 style="margin-top:0;">➕ 新增單字與多源開源詞庫聚合</h2>
         <form id="add-word-form" onsubmit="addWord(event)">
           <div class="form-group">
             <label>英文單字</label>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <input type="text" id="word-spelling" required placeholder="例如: try, ice, run" style="flex: 1; min-width: 180px;">
-              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 多源智慧聚合帶入</button>
+              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 多源開源智慧聚合</button>
               <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openQuickLookup()">🔍 查劍橋字典</button>
             </div>
             <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;"></div>
@@ -147,13 +145,13 @@
           </div>
 
           <div class="form-group">
-            <label>完整釋義與對應詞性 (支援多重意義與英英解釋)</label>
-            <textarea id="word-meaning" rows="6" required placeholder="系統會自動依詞性與多重資料庫帶入，您也可以手動補充..."></textarea>
+            <label>完整釋義與對應詞性</label>
+            <textarea id="word-meaning" rows="6" required placeholder="自動聚合後端高質量辭典與外部開源資料..."></textarea>
           </div>
 
           <div class="form-group">
             <label>相關例句 (用於克漏字測驗)</label>
-            <textarea id="word-sentence" rows="4" placeholder="• He likes to try new things."></textarea>
+            <textarea id="word-sentence" rows="4" placeholder="• 自動帶入真實母語例句..."></textarea>
           </div>
 
           <button type="submit" class="btn" style="width: 100%;">💾 儲存並同步至雲端專屬分頁</button>
@@ -165,7 +163,7 @@
     <div id="quiz-tab" class="tab-content hidden">
       <div id="quiz-start-box" class="card quiz-container">
         <h2>✍️ 單字自我測驗中心</h2>
-        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">透過不同角度的測試來強化記憶，答錯的題目將自動標記為易錯！</p>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">高擬真克漏字與多維度測驗，答錯自動標記易錯！</p>
         
         <div class="quiz-type-selector">
           <div class="type-card selected" onclick="selectQuizType('choice_en_zh', this)">看英選解 (基礎選擇)</div>
@@ -228,18 +226,15 @@
   </div>
 
   <script>
-    // 🌟 已內建你的專屬 Apps Script 部署網址
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
     let vocabData = [];
-    
     let currentQuizType = "choice_en_zh";
     let currentQuizIndex = 0;
     let currentQuizQuestions = [];
     let wrongAnswers = [];
 
-    // --- 帳號驗證與登入 ---
     async function handleAuth(actionType) {
       const username = document.getElementById("auth-username").value.trim();
       const password = document.getElementById("auth-password").value.trim();
@@ -267,9 +262,7 @@
           document.getElementById("current-user-display").innerText = `👤 ${currentUser}`;
           document.getElementById("auth-section").classList.add("hidden");
           document.getElementById("app-nav").classList.remove("hidden");
-          
           if (actionType === "register") alert("註冊成功！系統已在 Google 試算表中為您建立專屬獨立分頁。");
-          
           await loadUserDataFromCloud();
           switchTab('list');
         } else {
@@ -277,7 +270,7 @@
           msgBox.style.color = "var(--danger)";
         }
       } catch (err) {
-        msgBox.innerText = `❌ 網路連線錯誤，請檢查部署網址。`;
+        msgBox.innerText = `❌ 網路連線錯誤。`;
         msgBox.style.color = "var(--danger)";
       }
     }
@@ -293,17 +286,15 @@
       document.getElementById("auth-password").value = "";
     }
 
-    // --- 雲端資料同步 ---
     async function loadUserDataFromCloud() {
       setSyncStatus("⏳ 正在讀取專屬分頁...");
       try {
         const res = await fetch(`${GAS_API_URL}?action=getData&user=${encodeURIComponent(currentUser)}&t=${Date.now()}`);
         if (!res.ok) throw new Error("HTTP Error");
-        const cloudData = await res.json();
-        vocabData = cloudData || [];
+        vocabData = (await res.json()) || [];
         setSyncStatus(`✅ 已同步 ${vocabData.length} 個單字`);
       } catch (err) {
-        setSyncStatus(`⚠️ 雲端讀取失敗 - 使用本機暫存`);
+        setSyncStatus(`⚠️ 使用本機暫存`);
         const local = localStorage.getItem(`vocab_data_${currentUser}`);
         vocabData = local ? JSON.parse(local) : [];
       }
@@ -312,7 +303,7 @@
 
     async function saveUserDataToCloud() {
       localStorage.setItem(`vocab_data_${currentUser}`, JSON.stringify(vocabData));
-      setSyncStatus("⏳ 正在同步至雲端分頁...");
+      setSyncStatus("⏳ 正在同步至雲端...");
       try {
         await fetch(GAS_API_URL, {
           method: "POST",
@@ -325,9 +316,7 @@
       }
     }
 
-    function setSyncStatus(msg) {
-      document.getElementById("sync-indicator").innerText = msg;
-    }
+    function setSyncStatus(msg) { document.getElementById("sync-indicator").innerText = msg; }
 
     function switchTab(tabName) {
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
@@ -353,7 +342,7 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🌟 【多源智慧聚合引擎】結合 Free Dictionary API 與 Google 翻譯互補
+    // 🌟 【多源開源智慧聚合引擎】結合後端高品質核心庫、API 與翻譯互補
     async function autoFetchDetails() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
@@ -365,7 +354,7 @@
 
       btn.disabled = true;
       btn.innerHTML = `<span class="spin-icon">⏳</span> 聚合檢索中...`;
-      msg.innerText = "⏳ 正在同時向權威詞典與 Google 翻譯請求數據...";
+      msg.innerText = "⏳ 正在向後端高質量辭典庫與外部 API 請求...";
       msg.style.color = "var(--primary)";
 
       let phoneticStr = "";
@@ -375,54 +364,62 @@
       let chineseTranslation = "";
       let hasData = false;
 
-      // 同時發起多個來源請求
-      const [dictResult, translateResult] = await Promise.allSettled([
-        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null),
-        fetch(`${GAS_API_URL}?action=translate&word=${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null)
+      // 同時發起請求：1. 後端高質量智慧查詞通道  2. 外部標準開源字典 API
+      const [backendResult, apiResult] = await Promise.allSettled([
+        fetch(`${GAS_API_URL}?action=lookup&word=${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null),
+        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null)
       ]);
 
-      // 1. 解析字典 API
-      if (dictResult.status === 'fulfilled' && dictResult.value && dictResult.value.length > 0) {
+      // 優先檢查後端高質量核心詞庫或翻譯
+      if (backendResult.status === 'fulfilled' && backendResult.value && backendResult.value.status === "success") {
         hasData = true;
-        const first = dictResult.value[0];
-
-        if (first.phonetic) {
-          phoneticStr = first.phonetic;
-        } else if (first.phonetics && first.phonetics.length > 0) {
-          const pObj = first.phonetics.find(p => p.text);
-          if (pObj) phoneticStr = pObj.text;
-        }
-
-        if (first.meanings) {
-          first.meanings.forEach(m => {
-            const p = m.partOfSpeech || "other";
-            posSet.add(p);
-            
-            meaningBlocks.push(`🔹 [${p.toUpperCase()}]`);
-            if (m.definitions) {
-              m.definitions.forEach((d, idx) => {
-                meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
-                if (d.example) sentences.push(`• ${d.example}`);
-              });
-            }
-            meaningBlocks.push(""); 
-          });
+        const bData = backendResult.value;
+        if (bData.source === "core_dict" && bData.data) {
+          document.getElementById("word-pos").value = bData.data.pos;
+          document.getElementById("word-meaning").value = bData.data.meaning;
+          document.getElementById("word-sentence").value = bData.data.sentence;
+          msg.innerText = "✨ 成功從高質量核心詞庫帶入完整資料！";
+          msg.style.color = "var(--success)";
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+        } else if (bData.translation) {
+          chineseTranslation = bData.translation;
         }
       }
 
-      // 2. 解析翻譯互補
-      if (translateResult.status === 'fulfilled' && translateResult.value) {
-        const tData = translateResult.value;
-        if (tData.status === "success" && tData.translation) {
-          hasData = true;
-          chineseTranslation = tData.translation;
-        }
+      // 結合外部標準 API 深度解析
+      if (apiResult.status === 'fulfilled' && apiResult.value && apiResult.value.length > 0) {
+        hasData = true;
+        apiResult.value.forEach(entry => {
+          if (entry.phonetic && !phoneticStr) phoneticStr = entry.phonetic;
+          if (!phoneticStr && entry.phonetics) {
+            const pObj = entry.phonetics.find(p => p.text);
+            if (pObj) phoneticStr = pObj.text;
+          }
+
+          if (entry.meanings) {
+            entry.meanings.forEach(m => {
+              const p = m.partOfSpeech || "other";
+              posSet.add(p);
+              
+              meaningBlocks.push(`🔹 [${p.toUpperCase()}]`);
+              if (m.definitions) {
+                m.definitions.forEach((d, idx) => {
+                  meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
+                  if (d.example && typeof d.example === 'string' && d.example.trim().length > 0) {
+                    sentences.push(`• ${d.example.trim()}`);
+                  }
+                });
+              }
+              meaningBlocks.push(""); 
+            });
+          }
+        });
       }
 
-      // 3. 組合與排版
       if (hasData) {
         let finalOutput = "";
-
         if (phoneticStr) finalOutput += `【音標】 ${phoneticStr}\n\n`;
         if (chineseTranslation) finalOutput += `【中文核心直譯】 ${chineseTranslation}\n\n`;
         if (meaningBlocks.length > 0) {
@@ -433,16 +430,15 @@
         document.getElementById("word-meaning").value = finalOutput.trim();
         
         if (sentences.length > 0) {
-          const uniqueSentences = [...new Set(sentences)];
-          document.getElementById("word-sentence").value = uniqueSentences.slice(0, 3).join("\n");
+          document.getElementById("word-sentence").value = [...new Set(sentences)].slice(0, 3).join("\n");
         } else {
-          document.getElementById("word-sentence").value = `• This is an example sentence for ${word}.`;
+          document.getElementById("word-sentence").value = ""; 
         }
 
-        msg.innerText = "✨ 多源智慧聚合成功！已結合詞典與翻譯數據。";
+        msg.innerText = "✨ 多源開源智慧聚合成功！";
         msg.style.color = "var(--success)";
       } else {
-        msg.innerText = "❌ 各大資料庫皆查無此單字，請使用右側按鈕至劍橋字典查詢並手動補充。";
+        msg.innerText = "❌ 查無此單字，請透過右側劍橋字典查詢並補充。";
         msg.style.color = "var(--danger)";
       }
 
@@ -458,15 +454,15 @@
       const sentence = document.getElementById("word-sentence").value.trim();
       const uniqueId = `w_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
-      const isDuplicate = vocabData.some(item => item.word.toLowerCase() === spelling.toLowerCase());
-      if (isDuplicate) return alert(`⚠️ 您的單字庫中已經有「${spelling}」囉！請直接編輯它。`);
+      if (vocabData.some(item => item.word.toLowerCase() === spelling.toLowerCase())) {
+        return alert(`⚠️ 單字庫中已存在「${spelling}」！`);
+      }
 
       vocabData.push({ id: uniqueId, word: spelling, pos: pos, meaning: meaning, sentence: sentence, isError: false });
-      
       renderWordList();
       await saveUserDataToCloud();
       
-      alert("單字已成功儲存並同步至您的雲端專屬分頁！");
+      alert("單字已成功儲存並同步至雲端！");
       document.getElementById("add-word-form").reset();
       switchTab('list');
     }
@@ -511,7 +507,6 @@
       });
     }
 
-    // --- 編輯功能 ---
     function openEditModal(id) {
       const item = vocabData.find(i => String(i.id) === String(id));
       if (!item) return;
@@ -551,7 +546,6 @@
       if (item) { item.isError = !item.isError; renderWordList(); await saveUserDataToCloud(); }
     }
 
-    // --- ✍️ 測驗與克漏字模式 ---
     function selectQuizType(type, el) {
       currentQuizType = type;
       document.querySelectorAll(".type-card").forEach(c => c.classList.remove("selected"));
@@ -594,7 +588,7 @@
       else if (currentQuizType === 'cloze') {
         let targetSentence = q.sentence ? q.sentence.replace(/^•\s*/, '') : "";
         if (!targetSentence) {
-          targetSentence = `(無例句提示) 解釋：${q.meaning.split('\n')[0]}`;
+          targetSentence = `(無例句) 釋義：${q.meaning.split('\n')[0]}`;
         } else {
           const regex = new RegExp(`\\b${q.word}\\b`, 'gi');
           targetSentence = targetSentence.replace(regex, '( ________ )');
@@ -626,12 +620,10 @@
       options.forEach(opt => {
         const btn = document.createElement("button");
         btn.className = "option-btn";
-        
         let displayText = opt[key];
         if (key === 'meaning') {
           displayText = opt.meaning.split('\n').slice(0, 3).join('\n');
         }
-        
         btn.innerText = displayText;
         btn.onclick = () => checkAnswer(String(opt.id) === String(q.id), q);
         container.appendChild(btn);
