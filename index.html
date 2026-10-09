@@ -342,7 +342,6 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🌟 【多源開源智慧聚合引擎】結合後端高品質核心庫、API 與翻譯互補
     async function autoFetchDetails() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
@@ -364,13 +363,11 @@
       let chineseTranslation = "";
       let hasData = false;
 
-      // 同時發起請求：1. 後端高質量智慧查詞通道  2. 外部標準開源字典 API
       const [backendResult, apiResult] = await Promise.allSettled([
         fetch(`${GAS_API_URL}?action=lookup&word=${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null),
         fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null)
       ]);
 
-      // 優先檢查後端高質量核心詞庫或翻譯
       if (backendResult.status === 'fulfilled' && backendResult.value && backendResult.value.status === "success") {
         hasData = true;
         const bData = backendResult.value;
@@ -388,7 +385,6 @@
         }
       }
 
-      // 結合外部標準 API 深度解析
       if (apiResult.status === 'fulfilled' && apiResult.value && apiResult.value.length > 0) {
         hasData = true;
         apiResult.value.forEach(entry => {
@@ -467,6 +463,7 @@
       switchTab('list');
     }
 
+    // 🌟 已透過安全 EventListener 徹底修復刪除與按鈕失效問題
     function renderWordList() {
       const container = document.getElementById("word-list");
       if (!container) return;
@@ -488,6 +485,7 @@
       filtered.forEach(item => {
         const card = document.createElement("div");
         card.className = `word-card ${item.isError ? 'error-marked' : ''}`;
+        
         card.innerHTML = `
           <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.3rem;">
             ${item.word} ${item.isError ? '<span class="badge badge-error">易錯</span>' : ''}
@@ -497,12 +495,26 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1rem; display: flex; gap: 0.3rem; flex-wrap: wrap;">
-            <button class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank')">🔍 劍橋字典</button>
-            <button class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}')">✏️ 編輯</button>
-            <button class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="toggleError('${item.id}')">${item.isError ? '取消標記' : '標註易錯'}</button>
-            <button class="btn btn-danger" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWord('${item.id}')">刪除</button>
+            <button type="button" class="btn btn-secondary btn-cambridge" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;">🔍 劍橋字典</button>
+            <button type="button" class="btn btn-secondary btn-edit" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;">✏️ 編輯</button>
+            <button type="button" class="btn btn-secondary btn-error" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;">${item.isError ? '取消標記' : '標註易錯'}</button>
+            <button type="button" class="btn btn-danger btn-delete" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; margin-left: auto;">刪除</button>
           </div>
         `;
+
+        card.querySelector('.btn-cambridge').addEventListener('click', () => {
+          window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(item.word)}`, '_blank');
+        });
+        card.querySelector('.btn-edit').addEventListener('click', () => {
+          openEditModal(item.id);
+        });
+        card.querySelector('.btn-error').addEventListener('click', () => {
+          toggleError(item.id);
+        });
+        card.querySelector('.btn-delete').addEventListener('click', () => {
+          deleteWord(item.id);
+        });
+
         container.appendChild(card);
       });
     }
@@ -535,7 +547,7 @@
 
     async function deleteWord(id) {
       if (confirm("確定要刪除這個單字嗎？")) {
-        vocabData = vocabData.filter(i => String(i.id) !== String(id));
+        vocabData = vocabData.filter(i => String(i.id).trim() !== String(id).trim());
         renderWordList();
         await saveUserDataToCloud();
       }
