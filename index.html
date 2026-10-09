@@ -69,7 +69,7 @@
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 1.5rem; border-radius: var(--radius); width: 90%; max-width: 500px; box-shadow: var(--shadow); }
 
-    /* --- 自動帶入功能的動畫效果 --- */
+    /* --- 動畫效果 --- */
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
     @keyframes pulse-text { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -98,7 +98,7 @@
   <div class="container">
     
     <div id="auth-section" class="card">
-      <h2 style="margin-top:0;">☁️ 歡迎使用雲端單字庫試4</h2>
+      <h2 style="margin-top:0;">☁️ 歡迎使用雲端單字庫</h2>
       <p style="color: var(--text-muted); margin-bottom: 1rem;">輸入名字即可自動從 Google 雲端載入您的專屬單字：</p>
       <div class="form-group">
         <input type="text" id="username-input" placeholder="例如: Alex" onkeydown="if(event.key==='Enter') login()" />
@@ -206,7 +206,6 @@
 
   </div>
 
-  <!-- 編輯 Modal -->
   <div id="edit-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 style="margin-bottom: 1rem;">✏️ 編輯單字內容</h3>
@@ -240,7 +239,8 @@
   </div>
 
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxZwWXsVIZ8BkXgxsU_X4kBfeVzKtrvqzpmZi_NWXkHogd2MGW5_lTJmcxelajCVIad/exec";
+    // 💡 已更新為你的正確 Apps Script 部署網址
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
     let vocabData = [];
@@ -347,7 +347,6 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🚀 【完美升級版】字典詳盡抓取與動畫處理
     async function autoFetchDetails() {
       const word = document.getElementById("word-spelling").value.trim().toLowerCase();
       const msg = document.getElementById("auto-fetch-msg");
@@ -387,7 +386,6 @@
           const dictData = await dictRes.json();
           const firstData = dictData[0];
           
-          // 抓取音標 (Phonetic)
           if (firstData.phonetic) {
             phoneticStr = firstData.phonetic;
           } else if (firstData.phonetics && firstData.phonetics.length > 0) {
@@ -395,7 +393,6 @@
             if (ph) phoneticStr = ph.text;
           }
 
-          // 抓取詞性、多重英英釋義、多重例句
           if (firstData.meanings) {
             firstData.meanings.forEach(m => {
               const p = m.partOfSpeech ? m.partOfSpeech.toLowerCase() : "";
@@ -406,7 +403,7 @@
               if (p.includes("preposition")) document.querySelector('input[name="pos"][value="prep."]').checked = true;
               if (p.includes("conjunction")) document.querySelector('input[name="pos"][value="conj."]').checked = true;
 
-              m.definitions.slice(0, 2).forEach(d => { // 每個詞性抓前2個解釋
+              m.definitions.slice(0, 2).forEach(d => {
                 if (d.definition) engDefs.push(`[${m.partOfSpeech}] ${d.definition}`);
                 if (d.example) engExs.push(`• ${d.example}`);
               });
@@ -414,7 +411,6 @@
           }
         }
 
-        // 組合最終釋義 (音標 + 中文 + 英英)
         let finalMeaning = "";
         if (phoneticStr) finalMeaning += `【音標】${phoneticStr}\n`;
         if (chineseTrans) finalMeaning += `【中文翻譯】${chineseTrans}\n`;
@@ -433,7 +429,6 @@
           msg.innerText = "✅ 完整釋義、音標與例句帶入成功！";
         }
 
-        // 觸發高光成功動畫
         ["word-meaning", "word-sentence", "word-pos-group"].forEach(id => {
           const el = document.getElementById(id);
           if (el) {
@@ -458,16 +453,14 @@
       }
     }
 
-    // 🚀 【新增】嚴格阻擋重複單字邏輯
     async function addWord(e) {
       e.preventDefault();
       const spelling = document.getElementById("word-spelling").value.trim();
       
-      // 比對現有單字庫，不分大小寫
       const isDuplicate = vocabData.some(item => item.word.toLowerCase() === spelling.toLowerCase());
       if (isDuplicate) {
         alert(`⚠️ 您的單字庫中已經有「${spelling}」囉！\n請勿重複新增，您可以直接在總覽編輯它。`);
-        return; // 終止執行
+        return;
       }
 
       const meaning = document.getElementById("word-meaning").value.trim();
@@ -511,8 +504,6 @@
       filtered.forEach(item => {
         const card = document.createElement("div");
         card.className = `word-card ${item.isError ? 'error-marked' : ''}`;
-        
-        // 為了讓卡片上的換行能正確顯示，加上 CSS white-space: pre-wrap;
         card.innerHTML = `
           <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.3rem;">
             ${item.word} ${item.isError ? '<span class="badge badge-error">易錯</span>' : ''}
@@ -605,7 +596,6 @@
         document.getElementById("quiz-sub-prompt").innerText = `請選擇正確中文（詞性：${q.pos}）`;
         optionsContainer.classList.remove("hidden"); renderOptions(q, 'meaning');
       } else if (currentQuizType === 'choice_zh_en') {
-        // 測驗時為了畫面簡潔，只取中文翻譯的第一行顯示
         const shortMeaning = q.meaning.split('\n')[0].replace('【中文翻譯】', '').trim();
         document.getElementById("quiz-question-display").innerText = `${q.pos} ${shortMeaning}`;
         document.getElementById("quiz-sub-prompt").innerText = "請選擇正確英文單字";
@@ -632,7 +622,6 @@
         const btn = document.createElement("button");
         btn.className = "option-btn";
         
-        // 如果是顯示意思，因為現在意思很長，我們在按鈕上只顯示第一行（中文）避免破版
         let displayText = opt[key];
         if (key === 'meaning') {
             displayText = displayText.split('\n')[0].replace('【中文翻譯】', '').trim();
