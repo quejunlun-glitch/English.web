@@ -6,65 +6,88 @@
   <title>VocabMaster - 雲端多源開源詞典整合版</title>
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
       --primary-light: #e0e7ff;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #0f172a;
+      --bg: #0f172a;
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text: #1e293b;
+      --text-light: #f8fafc;
       --text-muted: #64748b;
-      --border: #e2e8f0;
-      --danger: #ef4444;
+      --border: rgba(226, 232, 240, 0.8);
+      --danger: #f43f5e;
       --success: #10b981;
-      --radius: 12px;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --warning: #f59e0b;
+      --radius: 16px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: var(--bg); color: var(--text); padding-bottom: 2rem; min-height: 100vh; }
+    body { background: var(--bg-gradient); color: var(--text); padding-bottom: 3rem; min-height: 100vh; }
     
-    header { background: linear-gradient(135deg, #4f46e5, #3b82f6); color: white; padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); }
-    header h1 { font-size: 1.5rem; font-weight: 800; }
+    header { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-light); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    header h1 { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
-    .container { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
-    .card { background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .container { max-width: 950px; margin: 1.5rem auto; padding: 0 1rem; }
+    .card { background: var(--card-bg); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); transition: transform 0.2s; }
     
     .hidden { display: none !important; }
-    .sync-status { font-size: 0.85rem; color: #a5b4fc; font-weight: 500; margin-left: 1rem; }
+    .sync-status { font-size: 0.8rem; color: #cbd5e1; font-weight: 500; background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 20px; }
     
-    .nav-bar { display: flex; gap: 0.5rem; background: #e0e7ff; padding: 0.4rem; border-radius: var(--radius); margin-bottom: 1.5rem; }
-    .nav-btn { flex: 1; padding: 0.6rem 1rem; border: none; background: transparent; color: var(--primary); font-size: 0.95rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; touch-action: manipulation; }
-    .nav-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .nav-bar { display: flex; gap: 0.6rem; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 0.5rem; border-radius: var(--radius); margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.15); }
+    .nav-btn { flex: 1; padding: 0.7rem 1rem; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.25s; touch-action: manipulation; }
+    .nav-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); transform: translateY(-1px); }
 
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; font-size: 0.9rem; }
-    input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; outline: none; transition: border-color 0.2s; }
-    input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus { border-color: var(--primary); }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.9rem; color: #334155; }
+    input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 0.8rem 1rem; border: 2px solid var(--border); border-radius: 12px; font-size: 1rem; outline: none; transition: all 0.2s; background: #f8fafc; }
+    input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
     
-    .btn { background: var(--primary); color: white; border: none; padding: 0.75rem 1.2rem; border-radius: var(--radius); font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; touch-action: manipulation; }
-    .btn:hover { background: var(--primary-hover); }
-    .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
+    .btn { background: var(--primary); color: white; border: none; padding: 0.8rem 1.4rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; touch-action: manipulation; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25); }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-secondary { background: #f1f5f9; color: var(--text); border: 2px solid var(--border); box-shadow: none; }
     .btn-secondary:hover { background: #e2e8f0; }
-    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger { background: var(--danger); box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25); }
 
-    .grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-    .word-card { background: white; border-radius: var(--radius); padding: 1.2rem; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-    .word-card.error-marked { border-left: 5px solid var(--danger); }
-    .badge { display: inline-block; padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 700; border-radius: 4px; margin-right: 0.4rem; }
+    /* 📊 濾鏡切片器 */
+    .filter-chips { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .chip { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: white; border: 2px solid var(--border); cursor: pointer; transition: all 0.2s; }
+    .chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+    .grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
+    .word-card { background: white; border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: all 0.25s; position: relative; overflow: hidden; }
+    .word-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.08); }
+    .word-card.error-marked { border-left: 6px solid var(--danger); }
+    
+    .badge { display: inline-block; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 700; border-radius: 6px; margin-right: 0.4rem; }
     .badge-pos { background: var(--primary-light); color: var(--primary); }
     .badge-error { background: #fee2e2; color: var(--danger); }
 
+    /* 🌟 進度條區塊 */
+    .stats-bar { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.15); padding: 0.8rem 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; color: white; font-size: 0.9rem; font-weight: 600; }
+    .progress-track { flex: 1; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 0 1rem; overflow: hidden; }
+    .progress-fill { height: 100%; background: #34d399; border-radius: 4px; transition: width 0.5s ease; }
+
     .quiz-container { text-align: center; }
     .quiz-type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    .type-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 1rem; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.95rem; touch-action: manipulation; }
-    .type-card.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .type-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 1.2rem; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.95rem; touch-action: manipulation; background: white; transition: all 0.2s; }
+    .type-card.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
     .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
-    .option-btn { padding: 1rem; font-size: 1rem; background: #f8fafc; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 600; text-align: left; touch-action: manipulation; }
+    .option-btn { padding: 1.2rem; font-size: 1rem; background: #f8fafc; border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 600; text-align: left; touch-action: manipulation; transition: all 0.2s; }
     .option-btn:hover { background: var(--primary-light); border-color: var(--primary); }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 1.5rem; border-radius: var(--radius); width: 90%; max-width: 500px; box-shadow: var(--shadow); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease; }
+    .modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px; box-shadow: var(--shadow); }
 
+    /* 🍞 Toast 復原通知 */
+    #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { background: #1e293b; color: white; padding: 0.8rem 1.2rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 1rem; animation: slideUp 0.3s ease; }
+    .toast button { background: #34d399; border: none; color: #0f172a; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: 700; cursor: pointer; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .spin-icon { display: inline-block; animation: spin 1s linear infinite; }
   </style>
@@ -72,13 +95,13 @@
 <body>
 
   <header>
-    <div style="display: flex; align-items: center;">
-      <h1>VocabMaster</h1>
-      <span id="sync-indicator" class="sync-status"></span>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <h1>✨ VocabMaster</h1>
+      <span id="sync-indicator" class="sync-status">就緒</span>
     </div>
-    <div id="user-info">
-      <span id="current-user-display" style="margin-right: 1rem; font-weight: 500;">未登入</span>
-      <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="logout()">登出</button>
+    <div id="user-info" style="display: flex; align-items: center;">
+      <span id="current-user-display" style="margin-right: 1rem; font-weight: 600; font-size: 0.9rem;">未登入</span>
+      <button class="btn btn-secondary" style="padding: 0.3rem 0.7rem; font-size: 0.8rem;" onclick="logout()">登出</button>
     </div>
   </header>
 
@@ -86,8 +109,8 @@
     
     <!-- 🔐 登入 / 註冊區塊 -->
     <div id="auth-section" class="card">
-      <h2 style="margin-top:0;">🔐 雲端單字庫 - 登入 / 註冊</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">獨立分頁隔離、高質量開源詞庫支援。</p>
+      <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">獨立分頁雲端同步、多源開源詞庫高質量支援。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -105,21 +128,33 @@
       <div id="auth-msg" style="text-align: center; margin-top: 1rem; font-weight: 600;"></div>
     </div>
 
-    <!-- 導覽列 -->
-    <div id="app-nav" class="nav-bar hidden">
-      <button class="nav-btn active" onclick="switchTab('list')">📖 單字總覽</button>
-      <button class="nav-btn" onclick="switchTab('add')">➕ 新增單字</button>
-      <button class="nav-btn" onclick="switchTab('quiz')">✍️ 測驗模式</button>
+    <!-- 導覽列與學習進度條 -->
+    <div id="app-nav-wrapper" class="hidden">
+      <div class="stats-bar">
+        <span>📚 總字數: <strong id="stat-total">0</strong></span>
+        <div class="progress-track"><div id="stat-progress-fill" class="progress-fill" style="width: 0%;"></div></div>
+        <span>🔥 熟練掌握率: <strong id="stat-rate">100%</strong></span>
+      </div>
+
+      <div class="nav-bar">
+        <button class="nav-btn active" onclick="switchTab('list')">📖 單字總覽</button>
+        <button class="nav-btn" onclick="switchTab('add')">➕ 新增單字</button>
+        <button class="nav-btn" onclick="switchTab('quiz')">✍️ 測驗模式</button>
+      </div>
     </div>
 
     <!-- 📖 單字總覽 -->
     <div id="list-tab" class="tab-content hidden">
-      <div class="card" style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
-        <input type="text" id="search-input" placeholder="🔍 搜尋單字、解釋..." style="flex: 1; min-width: 200px;" oninput="renderWordList()">
-        <select id="filter-select" style="width: auto; min-width: 120px;" onchange="renderWordList()">
-          <option value="all">顯示全部單字</option>
-          <option value="error">僅顯示易錯單字</option>
-        </select>
+      <div class="card" style="padding: 1.2rem;">
+        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.8rem;">
+          <input type="text" id="search-input" placeholder="🔍 搜尋單字、解釋..." style="flex: 1; min-width: 200px;" oninput="renderWordList()">
+        </div>
+        <!-- 快速篩選切片器 -->
+        <div class="filter-chips">
+          <div class="chip active" onclick="setFilter('all', this)">全部單字</div>
+          <div class="chip" onclick="setFilter('normal', this)">✅ 已掌握</div>
+          <div class="chip" onclick="setFilter('error', this)">⚠️ 易錯標記</div>
+        </div>
       </div>
       <div id="word-list" class="grid-list"></div>
     </div>
@@ -127,14 +162,14 @@
     <!-- ➕ 新增單字 -->
     <div id="add-tab" class="tab-content hidden">
       <div class="card">
-        <h2 style="margin-top:0;">➕ 新增單字與多源開源詞庫聚合</h2>
+        <h2 style="margin-top:0; margin-bottom: 1.2rem;">➕ 新增單字與多源開源詞庫聚合</h2>
         <form id="add-word-form" onsubmit="addWord(event)">
           <div class="form-group">
             <label>英文單字</label>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <input type="text" id="word-spelling" required placeholder="例如: try, ice, run" style="flex: 1; min-width: 180px;">
-              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 多源開源智慧聚合</button>
-              <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openQuickLookup()">🔍 查劍橋字典</button>
+              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 智慧聚合</button>
+              <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openQuickLookup()">🔍 劍橋</button>
             </div>
             <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;"></div>
           </div>
@@ -166,16 +201,16 @@
         <p style="color: var(--text-muted); margin-bottom: 1.5rem;">高擬真克漏字與多維度測驗，答錯自動標記易錯！</p>
         
         <div class="quiz-type-selector">
-          <div class="type-card selected" onclick="selectQuizType('choice_en_zh', this)">看英選解 (基礎選擇)</div>
-          <div class="type-card" onclick="selectQuizType('cloze', this)">語境克漏字 (進階填空)</div>
-          <div class="type-card" onclick="selectQuizType('spelling', this)">看解拼字 (拼寫考驗)</div>
+          <div class="type-card selected" onclick="selectQuizType('choice_en_zh', this)">看英選解 (基礎)</div>
+          <div class="type-card" onclick="selectQuizType('cloze', this)">語境克漏字 (進階)</div>
+          <div class="type-card" onclick="selectQuizType('spelling', this)">看解拼字 (考驗)</div>
         </div>
-        <button class="btn" style="padding: 0.8rem 2rem; font-size: 1.1rem;" onclick="startQuiz()">🚀 開始測驗</button>
+        <button class="btn" style="padding: 0.9rem 2.5rem; font-size: 1.1rem;" onclick="startQuiz()">🚀 開始測驗</button>
       </div>
 
       <div id="quiz-running-box" class="card quiz-container hidden">
-        <div id="quiz-progress" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;"></div>
-        <h2 id="quiz-question-display" style="font-size: 1.6rem; color: var(--primary); margin-bottom: 0.5rem; line-height: 1.4;"></h2>
+        <div id="quiz-progress" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;"></div>
+        <h2 id="quiz-question-display" style="font-size: 1.5rem; color: var(--primary); margin-bottom: 0.8rem; line-height: 1.4;"></h2>
         <p id="quiz-sub-prompt" style="color: var(--text-muted); margin-bottom: 1.5rem;"></p>
 
         <div id="quiz-options-container" class="options-grid"></div>
@@ -199,7 +234,7 @@
   <!-- ✏️ 編輯 Modal -->
   <div id="edit-modal" class="modal-overlay hidden">
     <div class="modal-content">
-      <h3 style="margin-bottom: 1rem;">✏️ 編輯單字內容與手動補充</h3>
+      <h3 style="margin-bottom: 1.2rem; color: #1e293b;">✏️ 編輯單字內容</h3>
       <input type="hidden" id="edit-word-id">
       
       <div class="form-group">
@@ -211,29 +246,34 @@
         <input type="text" id="edit-word-pos">
       </div>
       <div class="form-group">
-        <label>完整釋義與多重詞性內容</label>
+        <label>完整釋義與內容</label>
         <textarea id="edit-word-meaning" rows="5"></textarea>
       </div>
       <div class="form-group">
         <label>例句</label>
         <textarea id="edit-word-sentence" rows="3"></textarea>
       </div>
-      <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+      <div style="display: flex; gap: 0.8rem; justify-content: flex-end; margin-top: 1.5rem;">
         <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
         <button class="btn" onclick="saveEditedWord()">💾 儲存修改</button>
       </div>
     </div>
   </div>
 
+  <!-- 🍞 復原通知容器 -->
+  <div id="toast-container"></div>
+
   <script>
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
     let vocabData = [];
+    let currentFilter = "all";
     let currentQuizType = "choice_en_zh";
     let currentQuizIndex = 0;
     let currentQuizQuestions = [];
     let wrongAnswers = [];
+    let lastDeletedItem = null;
 
     async function handleAuth(actionType) {
       const username = document.getElementById("auth-username").value.trim();
@@ -261,7 +301,7 @@
           currentUser = username;
           document.getElementById("current-user-display").innerText = `👤 ${currentUser}`;
           document.getElementById("auth-section").classList.add("hidden");
-          document.getElementById("app-nav").classList.remove("hidden");
+          document.getElementById("app-nav-wrapper").classList.remove("hidden");
           if (actionType === "register") alert("註冊成功！系統已在 Google 試算表中為您建立專屬獨立分頁。");
           await loadUserDataFromCloud();
           switchTab('list');
@@ -280,30 +320,32 @@
       vocabData = [];
       document.getElementById("current-user-display").innerText = "未登入";
       document.getElementById("auth-section").classList.remove("hidden");
-      document.getElementById("app-nav").classList.add("hidden");
+      document.getElementById("app-nav-wrapper").classList.add("hidden");
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
       document.getElementById("auth-msg").innerText = "";
       document.getElementById("auth-password").value = "";
     }
 
     async function loadUserDataFromCloud() {
-      setSyncStatus("⏳ 正在讀取專屬分頁...");
+      setSyncStatus("⏳ 讀取中...");
       try {
         const res = await fetch(`${GAS_API_URL}?action=getData&user=${encodeURIComponent(currentUser)}&t=${Date.now()}`);
         if (!res.ok) throw new Error("HTTP Error");
         vocabData = (await res.json()) || [];
-        setSyncStatus(`✅ 已同步 ${vocabData.length} 個單字`);
+        setSyncStatus(`✅ 已同步 ${vocabData.length} 字`);
       } catch (err) {
-        setSyncStatus(`⚠️ 使用本機暫存`);
+        setSyncStatus(`⚠️ 本機暫存`);
         const local = localStorage.getItem(`vocab_data_${currentUser}`);
         vocabData = local ? JSON.parse(local) : [];
       }
+      updateStats();
       renderWordList();
     }
 
     async function saveUserDataToCloud() {
       localStorage.setItem(`vocab_data_${currentUser}`, JSON.stringify(vocabData));
-      setSyncStatus("⏳ 正在同步至雲端...");
+      updateStats();
+      setSyncStatus("⏳ 同步中...");
       try {
         await fetch(GAS_API_URL, {
           method: "POST",
@@ -312,11 +354,22 @@
         });
         setSyncStatus("✅ 雲端同步完成");
       } catch (err) {
-        setSyncStatus(`❌ 同步失敗 - 已暫存本機`);
+        setSyncStatus(`❌ 同步失敗(本機)");
       }
     }
 
     function setSyncStatus(msg) { document.getElementById("sync-indicator").innerText = msg; }
+
+    function updateStats() {
+      const total = vocabData.length;
+      const errors = vocabData.filter(i => i.isError).length;
+      const normals = total - errors;
+      const rate = total > 0 ? Math.round((normals / total) * 100) : 100;
+
+      document.getElementById("stat-total").innerText = total;
+      document.getElementById("stat-rate").innerText = rate + "%";
+      document.getElementById("stat-progress-fill").style.width = rate + "%";
+    }
 
     function switchTab(tabName) {
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
@@ -336,6 +389,23 @@
       }
     }
 
+    function setFilter(type, el) {
+      currentFilter = type;
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      el.classList.add("active");
+      renderWordList();
+    }
+
+    function speakWord(word) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("您的瀏覽器不支援語音朗讀功能");
+      }
+    }
+
     function openQuickLookup() {
       const word = document.getElementById("word-spelling").value.trim().toLowerCase();
       if (!word) return alert("請先輸入英文單字！");
@@ -352,8 +422,8 @@
       if (!word) return alert("請先輸入英文單字！");
 
       btn.disabled = true;
-      btn.innerHTML = `<span class="spin-icon">⏳</span> 聚合檢索中...`;
-      msg.innerText = "⏳ 正在向後端高質量辭典庫與外部 API 請求...";
+      btn.innerHTML = `<span class="spin-icon">⏳</span> 檢索中...`;
+      msg.innerText = "⏳ 正在聚合高質量辭典與外部 API...";
       msg.style.color = "var(--primary)";
 
       let phoneticStr = "";
@@ -398,7 +468,6 @@
             entry.meanings.forEach(m => {
               const p = m.partOfSpeech || "other";
               posSet.add(p);
-              
               meaningBlocks.push(`🔹 [${p.toUpperCase()}]`);
               if (m.definitions) {
                 m.definitions.forEach((d, idx) => {
@@ -419,22 +488,20 @@
         if (phoneticStr) finalOutput += `【音標】 ${phoneticStr}\n\n`;
         if (chineseTranslation) finalOutput += `【中文核心直譯】 ${chineseTranslation}\n\n`;
         if (meaningBlocks.length > 0) {
-          finalOutput += `【多源詞性與詳細釋義】\n` + meaningBlocks.join("\n").trim();
+          finalOutput += `【詳細釋義】\n` + meaningBlocks.join("\n").trim();
         }
 
         document.getElementById("word-pos").value = [...posSet].join(", ") || "n./v.";
         document.getElementById("word-meaning").value = finalOutput.trim();
-        
         if (sentences.length > 0) {
           document.getElementById("word-sentence").value = [...new Set(sentences)].slice(0, 3).join("\n");
         } else {
           document.getElementById("word-sentence").value = ""; 
         }
-
-        msg.innerText = "✨ 多源開源智慧聚合成功！";
+        msg.innerText = "✨ 智慧聚合成功！";
         msg.style.color = "var(--success)";
       } else {
-        msg.innerText = "❌ 查無此單字，請透過右側劍橋字典查詢並補充。";
+        msg.innerText = "❌ 查無此單字，請透過劍橋字典查詢補充。";
         msg.style.color = "var(--danger)";
       }
 
@@ -467,17 +534,18 @@
       const container = document.getElementById("word-list");
       if (!container) return;
       const keyword = document.getElementById("search-input").value.toLowerCase();
-      const filter = document.getElementById("filter-select").value;
       
       container.innerHTML = "";
       let filtered = vocabData.filter(item => {
         const matchesKey = item.word.toLowerCase().includes(keyword) || item.meaning.toLowerCase().includes(keyword);
-        const matchesFilter = filter === 'all' || (filter === 'error' && item.isError);
+        let matchesFilter = true;
+        if (currentFilter === 'normal') matchesFilter = !item.isError;
+        if (currentFilter === 'error') matchesFilter = item.isError;
         return matchesKey && matchesFilter;
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">目前尚無單字資料。</p>`;
+        container.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted); text-align: center; padding: 2rem;">目前尚無符合條件的單字資料。</p>`;
         return;
       }
 
@@ -486,21 +554,23 @@
         card.className = `word-card ${item.isError ? 'error-marked' : ''}`;
         
         card.innerHTML = `
-          <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.3rem;">
-            ${item.word} ${item.isError ? '<span class="badge badge-error">易錯</span>' : ''}
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a;">
+              ${item.word} ${item.isError ? '<span class="badge badge-error">易錯</span>' : ''}
+            </div>
+            <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="speakWord('${item.word}')">🔊 唸</button>
           </div>
-          <div style="margin-bottom: 0.5rem;"><span class="badge badge-pos">${item.pos || '未指定'}</span></div>
-          <div style="white-space: pre-wrap; font-size: 0.9rem; color: #334155; line-height: 1.4; max-height: 150px; overflow-y: auto;">${item.meaning}</div>
+          <div style="margin-bottom: 0.6rem;"><span class="badge badge-pos">${item.pos || '未指定'}</span></div>
+          <div style="white-space: pre-wrap; font-size: 0.9rem; color: #334155; line-height: 1.4; max-height: 140px; overflow-y: auto;">${item.meaning}</div>
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
-          <div style="margin-top: 1rem; display: flex; gap: 0.3rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank');">🔍 劍橋</button>
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '取消' : '易錯'}</button>
-            <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}');">🗑️ 刪除</button>
+          <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
+            <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
           </div>
         `;
-
         container.appendChild(card);
       });
     }
@@ -531,10 +601,32 @@
       }
     }
 
-    // 🌟 完全屏除 confirm()，點擊直接刪除，避免平板瀏覽器封鎖對話框
     async function deleteWordDirect(id) {
       const targetId = String(id).trim();
-      vocabData = vocabData.filter(i => String(i.id).trim() !== targetId);
+      const index = vocabData.findIndex(i => String(i.id).trim() === targetId);
+      if (index === -1) return;
+      
+      lastDeletedItem = { item: vocabData[index], index: index };
+      vocabData.splice(index, 1);
+      renderWordList();
+      await saveUserDataToCloud();
+      showUndoToast();
+    }
+
+    function showUndoToast() {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.innerHTML = `<span>已刪除「${lastDeletedItem.item.word}」</span><button onclick="undoDelete()">復原</button>`;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    }
+
+    async function undoDelete() {
+      if (!lastDeletedItem) return;
+      vocabData.splice(lastDeletedItem.index, 0, lastDeletedItem.item);
+      lastDeletedItem = null;
+      document.getElementById("toast-container").innerHTML = "";
       renderWordList();
       await saveUserDataToCloud();
     }
@@ -650,7 +742,7 @@
       document.getElementById("quiz-result-box").classList.remove("hidden");
       const total = currentQuizQuestions.length;
       const correct = total - wrongAnswers.length;
-      document.getElementById("quiz-score-summary", `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`);
+      document.getElementById("quiz-score-summary").innerText = `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`;
 
       const wrongContainer = document.getElementById("wrong-words-container");
       wrongContainer.innerHTML = "";
