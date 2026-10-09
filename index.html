@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocabMaster v8.1 - 雲端單字庫</title>
+  <title>VocabMaster v8.3 - 雲端單字庫</title>
   <style>
     :root {
       --primary: #4f46e5;
@@ -15,7 +15,6 @@
       --text-muted: #64748b;
       --border: #e2e8f0;
       --danger: #ef4444;
-      --warning: #f59e0b;
       --success: #10b981;
       --radius: 12px;
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -29,10 +28,8 @@
     .container { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
     .card { background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
     
-    /* 💡 新增：隱藏區塊用的 class */
     .hidden { display: none !important; }
     
-    /* 💡 新增：分頁導覽列樣式 */
     .nav-bar { display: flex; gap: 0.5rem; background: #e0e7ff; padding: 0.4rem; border-radius: var(--radius); margin-bottom: 1.5rem; }
     .nav-btn { flex: 1; padding: 0.8rem; border: none; background: transparent; color: var(--primary); font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s; }
     .nav-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -68,7 +65,7 @@
 <body>
   <header>
     <div>
-      <h1>VocabMaster v8.2</h1>
+      <h1>VocabMaster v8.3</h1>
       <span id="sync-indicator" style="font-size: 0.85rem; margin-left: 1rem;"></span>
     </div>
     <div id="user-info">
@@ -88,7 +85,7 @@
       <button class="btn" style="width: 100%;" onclick="login()">🚀 載入雲端單字庫</button>
     </div>
 
-    <!-- 💡 新增：功能分頁導覽列 -->
+    <!-- 功能分頁導覽列 -->
     <div id="app-nav" class="nav-bar hidden">
       <button class="nav-btn active" onclick="switchTab('list')">📖 單字庫</button>
       <button class="nav-btn" onclick="switchTab('add')">➕ 新增</button>
@@ -110,13 +107,12 @@
     <!-- 頁籤 2: 新增單字 -->
     <div id="tab-add" class="tab-content hidden">
       <div class="card">
-        <h2>➕ 新增單字 (直連劍橋詞典)</h2>
+        <h2>➕ 新增單字 (自動化抓取)</h2>
         <form id="add-word-form" onsubmit="addWord(event)" style="margin-top: 1rem;">
           <div class="form-group">
             <label>英文單字</label>
             <div style="display: flex; gap: 0.5rem;">
               <input type="text" id="word-spelling" required placeholder="例如: try" style="flex: 1;">
-              <!-- 💡 呼叫新的代理抓取函數 -->
               <button type="button" class="btn btn-secondary" onclick="autoFetchDetails()">⚡ 自動抓取</button>
             </div>
             <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;"></div>
@@ -178,7 +174,7 @@
     </div>
   </div>
 
-  <!-- 編輯單字 Modal (原封不動) -->
+  <!-- 編輯單字 Modal -->
   <div id="edit-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <h3>✏️ 編輯單字</h3>
@@ -195,7 +191,7 @@
   </div>
 
   <script>
-    // ⚠️ 請在這裡填入你原本的 Google Apps Script 網址 ⚠️
+    // ⚠️ 請替換為你的 Google Apps Script 網址 ⚠️
     const GAS_API_URL = "https://script.google.com/macros/s/你的網址/exec"; 
     
     let currentUser = "";
@@ -209,9 +205,7 @@
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-      
       document.getElementById('tab-' + tabId).classList.remove('hidden');
-      
       if (tabId === 'list') {
         document.querySelectorAll('.nav-btn')[0].classList.add('active');
         renderWordList();
@@ -234,7 +228,7 @@
       document.getElementById("app-nav").classList.remove("hidden");
       
       await loadUserDataFromCloud();
-      switchTab('list'); // 登入後預設顯示列表
+      switchTab('list');
     }
 
     function logout() {
@@ -246,12 +240,13 @@
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
     }
 
-    // ================= 雲端存取邏輯 =================
+    // ================= 雲端存取邏輯 (已修復 redirect 參數) =================
     async function loadUserDataFromCloud() {
       const msg = document.getElementById("sync-indicator");
       msg.innerText = "⏳ 載入中...";
       try {
-        const res = await fetch(`${GAS_API_URL}?user=${encodeURIComponent(currentUser)}`);
+        // 💡 確保 GET 請求也能正常跟隨重新導向
+        const res = await fetch(`${GAS_API_URL}?user=${encodeURIComponent(currentUser)}`, { method: "GET", redirect: "follow" });
         const cloudData = await res.json();
         if (Array.isArray(cloudData)) vocabData = cloudData;
         msg.innerText = "✅ 雲端同步完成";
@@ -267,72 +262,84 @@
       localStorage.setItem(`vocab_${currentUser}`, JSON.stringify(vocabData));
       document.getElementById("sync-indicator").innerText = "⏳ 儲存中...";
       try {
+        // 💡 關鍵修復：加上 redirect: "follow"，解決 Google Apps Script 阻擋問題
         await fetch(GAS_API_URL, {
           method: "POST",
+          redirect: "follow",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "saveAll", user: currentUser, data: vocabData })
         });
         document.getElementById("sync-indicator").innerText = "✅ 儲存成功";
       } catch (err) {
+        console.error("儲存失敗:", err);
         document.getElementById("sync-indicator").innerText = "❌ 同步失敗 (已存本機)";
       }
     }
 
-    // ================= 💡 改良版：前端安全代理抓取字典 =================
+    // ================= 🚀 全新強化的自動抓取功能 (Google Translate + Free Dictionary) =================
     async function autoFetchDetails() {
       const word = document.getElementById("word-spelling").value.trim().toLowerCase();
       const msg = document.getElementById("auto-fetch-msg");
       if (!word) return alert("請先輸入單字！");
       
       msg.style.color = "var(--primary)";
-      msg.innerText = "⏳ 正在透過代理伺服器查詢中...";
-      
+      msg.innerText = "⏳ 正在自動抓取單字資料...";
       document.querySelectorAll('input[name="pos"]').forEach(cb => cb.checked = false);
 
       try {
-        // 第一層保護：使用 Free Dictionary API 抓音標與詞性
+        let phonetic = "";
         let posList = [];
+        let sentence = "";
+        let meaning = "";
+
+        // 第一步：利用 Google 翻譯 API 抓取「精準中文翻譯」(超級穩定，不被 CORS 擋)
         try {
-          const apiRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-          if (apiRes.ok) {
-            const apiData = await apiRes.json();
-            apiData[0].meanings?.forEach(m => {
+          const gtUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-TW&dt=t&q=${encodeURIComponent(word)}`;
+          const gtRes = await fetch(gtUrl);
+          const gtData = await gtRes.json();
+          if (gtData && gtData[0] && gtData[0][0]) {
+            meaning = gtData[0][0][0]; 
+          }
+        } catch(e) { console.log("Google翻譯失敗", e); }
+
+        // 第二步：利用 Free Dictionary API 抓取「音標」、「詞性」與「例句」
+        try {
+          const dictUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+          const dictRes = await fetch(dictUrl);
+          if (dictRes.ok) {
+            const dictData = await dictRes.json();
+            const entry = dictData[0];
+            phonetic = entry.phonetic || (entry.phonetics?.find(p => p.text)?.text) || "";
+
+            entry.meanings?.forEach(m => {
               if (m.partOfSpeech && !posList.includes(m.partOfSpeech)) posList.push(m.partOfSpeech);
+              if (!sentence) {
+                const defWithEx = m.definitions?.find(d => d.example);
+                if (defWithEx) sentence = defWithEx.example;
+              }
             });
           }
-        } catch(e) {}
+        } catch(e) { console.log("字典API失敗", e); }
 
-        // 第二層保護：透過 AllOrigins 代理去爬取劍橋字典 (解決 CORS 問題)
-        const targetUrl = `https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-        
-        const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error("代理伺服器無回應");
-        const proxyData = await res.json();
-        const html = proxyData.contents;
+        if (!meaning) throw new Error("查無此字");
 
-        // 簡單正則解析
-        const defMatch = html.match(/class="trans dtrans dtrans-se[^"]*"[^>]*>([^<]+)<\/span>/);
-        const meaning = defMatch ? defMatch[1].trim() : "";
-        const exMatch = html.match(/class="eg deg"[^>]*>([^<]+)<\/span>/);
-        const sentence = exMatch ? exMatch[1].trim() : "";
-        
-        if (!meaning) throw new Error("字典中查無此字");
-
-        // 自動填寫
+        // 自動填寫到表單
         document.getElementById("word-meaning").value = meaning;
         if (sentence) document.getElementById("word-sentence").value = sentence;
 
+        // 自動勾選詞性
         const posLower = posList.join(" ").toLowerCase();
         if (posLower.includes("noun") || posLower.includes("n.")) document.querySelector('input[value="n."]').checked = true;
         if (posLower.includes("verb") || posLower.includes("v.")) document.querySelector('input[value="v."]').checked = true;
         if (posLower.includes("adj")) document.querySelector('input[value="adj."]').checked = true;
+        if (posLower.includes("adv")) document.querySelector('input[value="adv."]').checked = true;
+        if (posLower.includes("prep")) document.querySelector('input[value="prep."]').checked = true;
 
         msg.style.color = "var(--success)";
-        msg.innerText = `✅ 自動帶入成功！`;
+        msg.innerText = `✅ 自動帶入成功！${phonetic ? ' [音標: ' + phonetic + ']' : ''}`;
       } catch (err) {
         msg.style.color = "var(--danger)";
-        msg.innerText = `❌ 抓取失敗: ${err.message} (請手動輸入)`;
+        msg.innerText = `❌ 抓取失敗: 網路異常或單字不存在 (請手動輸入)`;
       }
     }
 
@@ -423,7 +430,7 @@
       if(item) { item.isError = !item.isError; renderWordList(); await saveUserDataToCloud(); }
     }
 
-    // ================= 💡 改良版：寬容防呆測驗邏輯 =================
+    // ================= 測驗邏輯 =================
     function selectQuizType(type, el) {
       currentQuizType = type;
       document.querySelectorAll(".type-card").forEach(c => c.classList.remove("selected"));
@@ -465,7 +472,6 @@
         renderOptions(q, 'word');
       } else if (currentQuizType === 'spelling') {
         document.getElementById("quiz-question-display").innerText = q.meaning;
-        // 💡 新增：給予首字母提示，降低挫折感
         document.getElementById("quiz-sub-prompt").innerText = `請拼寫英文 (提示首字母: ${q.word[0].toUpperCase()})`;
         document.getElementById("quiz-input-container").classList.remove("hidden");
         document.getElementById("quiz-type-input").value = "";
@@ -492,7 +498,6 @@
     function submitInputAnswer() {
       const userInput = document.getElementById("quiz-type-input").value;
       const q = currentQuizQuestions[currentQuizIndex];
-      // 💡 改良：強制轉小寫並去空白，容許使用者不小心打錯大小寫或多按空白鍵
       const isCorrect = userInput.trim().toLowerCase() === q.word.trim().toLowerCase();
       checkAnswer(isCorrect, q);
     }
