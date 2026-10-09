@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocabMaster - Gemini AI 智慧單字庫</title>
+  <title>VocabMaster - 隱私優先的 AI 單字庫</title>
   <style>
     :root {
       --primary: #6366f1;
@@ -90,7 +90,7 @@
 
   <header>
     <div style="display: flex; align-items: center; gap: 1rem;">
-      <h1>✨ VocabMaster Gemini</h1>
+      <h1>✨ VocabMaster AI</h1>
       <span id="sync-indicator" class="sync-status">就緒</span>
     </div>
     <div id="user-info" style="display: flex; align-items: center;">
@@ -101,10 +101,10 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊與 API Key 設定區塊 -->
+    <!-- 🔐 登入 / 註冊區塊 (金鑰僅暫存於當下執行記憶體，絕對不存入 localStorage 或雲端) -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（安全存於瀏覽器 localStorage，絕不上傳後端），解鎖 AI 智慧聚合與精準詞性解析。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">API Key 僅在本次執行時暫存於瀏覽器記憶體，關閉或重新整理網頁即自動銷毀，保障隱私。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -116,11 +116,11 @@
       </div>
       
       <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 2px dashed var(--border); margin-top: 1rem;">
-        <label style="color: var(--primary);">🤖 Gemini API Key (BYOK)</label>
+        <label style="color: var(--primary);">🤖 Gemini API Key (僅本次記憶體暫存)</label>
         <input type="password" id="auth-apikey" placeholder="請輸入您的 Gemini API Key (AIza...)" style="margin-bottom: 0.5rem;" />
         <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-          💡 哪裡取得免費 API Key？<br>
-          • 請至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a> 登入並免費建立金鑰。
+          💡 如何取得免費 API Key？<br>
+          • 請至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a> 建立金鑰。
         </div>
       </div>
 
@@ -268,7 +268,7 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
-    let userApiKey = "";
+    let userApiKey = ""; // 僅暫存於記憶體，絕不寫入 localStorage
     let vocabData = [];
     let currentFilter = "all";
     let currentQuizType = "choice_en_zh";
@@ -276,15 +276,6 @@
     let currentQuizQuestions = [];
     let wrongAnswers = [];
     let lastDeletedItem = null;
-
-    // 頁面載入時嘗試從 localStorage 恢復 API Key
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedKey = localStorage.getItem("vocab_gemini_apikey");
-      if (savedKey) {
-        document.getElementById("auth-apikey").value = savedKey;
-        userApiKey = savedKey;
-      }
-    });
 
     // 🌟 提取純中文核心直譯（確保測驗模式絕對只顯示乾淨直譯）
     function getCoreChineseDirect(meaningStr) {
@@ -335,10 +326,7 @@
 
         if (result.status === "success") {
           currentUser = username;
-          if (apikey) {
-            userApiKey = apikey;
-            localStorage.setItem("vocab_gemini_apikey", apikey);
-          }
+          if (apikey) userApiKey = apikey; // 僅存記憶體
           document.getElementById("current-user-display").innerText = `👤 ${currentUser}`;
           document.getElementById("auth-section").classList.add("hidden");
           document.getElementById("app-nav-wrapper").classList.remove("hidden");
@@ -357,6 +345,7 @@
 
     function logout() {
       currentUser = "";
+      userApiKey = "";
       vocabData = [];
       document.getElementById("current-user-display").innerText = "未登入";
       document.getElementById("auth-section").classList.remove("hidden");
@@ -364,6 +353,7 @@
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
       document.getElementById("auth-msg").innerText = "";
       document.getElementById("auth-password").value = "";
+      document.getElementById("auth-apikey").value = "";
     }
 
     async function loadUserDataFromCloud() {
@@ -452,7 +442,7 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🌟 採用你之前成功的純前端 Gemini 2.5-flash API 呼叫模式
+    // 🌟 純前端 Gemini 2.5-flash AI 呼叫（金鑰僅存於當下記憶體）
     async function autoFetchDetailsByAI() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
@@ -463,15 +453,14 @@
       if (!word) return alert("請先輸入英文單字！");
       
       if (!userApiKey) {
-        const inputKey = document.getElementById("auth-apikey").value.trim() || prompt("請輸入您的 Gemini API Key：");
+        const inputKey = document.getElementById("auth-apikey").value.trim() || prompt("請輸入您的 Gemini API Key（僅本次記憶體暫存）：");
         if (!inputKey) return alert("需要 API Key 才能使用 AI 智慧解析！");
         userApiKey = inputKey.trim();
-        localStorage.setItem("vocab_gemini_apikey", userApiKey);
       }
 
       btn.disabled = true;
       btn.innerHTML = `<span class="spin-icon">⏳</span> Gemini 解析中...`;
-      msg.innerText = "⏳ 正在透過前端安全通道請求 Gemini...";
+      msg.innerText = "⏳ 正在請求 Gemini...";
       msg.style.color = "var(--primary)";
 
       try {
@@ -485,11 +474,7 @@
         }`;
 
         const bodyData = {
-          contents: [{ 
-            parts: [
-              { text: systemPrompt }
-            ] 
-          }],
+          contents: [{ parts: [{ text: systemPrompt }] }],
           generationConfig: { 
             response_mime_type: "application/json",
             temperature: 0.3
