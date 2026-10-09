@@ -494,10 +494,10 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1rem; display: flex; gap: 0.3rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank'); event.preventDefault();">🔍 劍橋字典</button>
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}'); event.preventDefault();">✏️ 編輯</button>
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="toggleError('${item.id}'); event.preventDefault();">${item.isError ? '取消標記' : '標註易錯'}</button>
-            <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWord('${item.id}'); event.preventDefault();">刪除</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '取消' : '易錯'}</button>
+            <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.5rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}');">🗑️ 刪除</button>
           </div>
         `;
 
@@ -531,21 +531,12 @@
       }
     }
 
-    async function deleteWord(id) {
-      try {
-        console.log("準備刪除單字 ID:", id);
-        if (!confirm("確定要刪除這個單字嗎？")) return;
-
-        const targetId = String(id).trim();
-        vocabData = vocabData.filter(i => String(i.id).trim() !== targetId);
-
-        renderWordList();
-        await saveUserDataToCloud();
-        alert("刪除成功！");
-      } catch (err) {
-        console.error("刪除過程發生錯誤:", err);
-        alert("刪除時發生錯誤：" + err.message);
-      }
+    // 🌟 完全屏除 confirm()，點擊直接刪除，避免平板瀏覽器封鎖對話框
+    async function deleteWordDirect(id) {
+      const targetId = String(id).trim();
+      vocabData = vocabData.filter(i => String(i.id).trim() !== targetId);
+      renderWordList();
+      await saveUserDataToCloud();
     }
 
     async function toggleError(id) {
@@ -659,7 +650,7 @@
       document.getElementById("quiz-result-box").classList.remove("hidden");
       const total = currentQuizQuestions.length;
       const correct = total - wrongAnswers.length;
-      document.getElementById("quiz-score-summary").innerText = `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`;
+      document.getElementById("quiz-score-summary", `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`);
 
       const wrongContainer = document.getElementById("wrong-words-container");
       wrongContainer.innerHTML = "";
