@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocabMaster - AI 智慧雲端單字庫</title>
+  <title>VocabMaster - Gemini AI 智慧單字庫</title>
   <style>
     :root {
       --primary: #6366f1;
@@ -90,7 +90,7 @@
 
   <header>
     <div style="display: flex; align-items: center; gap: 1rem;">
-      <h1>✨ VocabMaster AI</h1>
+      <h1>✨ VocabMaster Gemini</h1>
       <span id="sync-indicator" class="sync-status">就緒</span>
     </div>
     <div id="user-info" style="display: flex; align-items: center;">
@@ -104,7 +104,7 @@
     <!-- 🔐 登入 / 註冊區塊 -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">API Key 僅在本次執行時暫存於記憶體，<strong>絕不儲存於後端資料庫</strong>，保護您的隱私安全。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">透過 Google Gemini API 啟用高精度 AI 智慧聚合，金鑰僅暫存於記憶體，<strong>絕不儲存於後端資料庫</strong>。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -116,11 +116,11 @@
       </div>
       
       <div id="register-api-box" class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 2px dashed var(--border); margin-top: 1rem;">
-        <label style="color: var(--primary);">🤖 OpenAI API Key (僅本次暫存)</label>
-        <input type="password" id="auth-apikey" placeholder="請輸入您的 OpenAI API Key (sk-...)" style="margin-bottom: 0.5rem;" />
+        <label style="color: var(--primary);">🤖 Google Gemini API Key (僅本次暫存)</label>
+        <input type="password" id="auth-apikey" placeholder="請輸入您的 Gemini API Key (AIza...)" style="margin-bottom: 0.5rem;" />
         <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-          💡 哪裡取得 API Key？<br>
-          • 請至 <a href="[https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)" target="_blank" style="color: var(--primary); font-weight: 600;">OpenAI API Keys</a> 建立帳號並產生金鑰。
+          💡 如何免費取得 Gemini API Key？<br>
+          • 請至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a> 登入並免費建立金鑰。
         </div>
       </div>
 
@@ -164,7 +164,7 @@
     <!-- ➕ 新增單字 -->
     <div id="add-tab" class="tab-content hidden">
       <div class="card">
-        <h2 style="margin-top:0; margin-bottom: 1.2rem;">➕ AI 智慧聚合單字</h2>
+        <h2 style="margin-top:0; margin-bottom: 1.2rem;">➕ Gemini AI 智慧聚合單字</h2>
         <form id="add-word-form" onsubmit="addWord(event)">
           <div class="form-group">
             <label>英文單字</label>
@@ -265,7 +265,7 @@
   <div id="toast-container"></div>
 
   <script>
-    const GAS_API_URL = "[https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec](https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec)";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
     let userApiKey = ""; // 僅暫存於記憶體，絕不上傳雲端
@@ -277,6 +277,7 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
+    // 🌟 提取純中文核心直譯（確保測驗模式絕對只顯示乾淨直譯）
     function getCoreChineseDirect(meaningStr) {
       if (!meaningStr) return "(無釋義)";
       const lines = meaningStr.split('\n');
@@ -307,7 +308,7 @@
       }
 
       if (actionType === 'register' && !apikey) {
-        msgBox.innerText = "⚠️ 註冊新帳號時請務必填入 API Key！";
+        msgBox.innerText = "⚠️ 註冊新帳號時請務必填入 Gemini API Key！";
         msgBox.style.color = "var(--danger)";
         return;
       }
@@ -438,10 +439,10 @@
     function openQuickLookup() {
       const word = document.getElementById("word-spelling").value.trim().toLowerCase();
       if (!word) return alert("請先輸入英文單字！");
-      window.open(`[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){encodeURIComponent(word)}`, '_blank');
+      window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🌟 每次呼叫 AI 時動態帶入 userApiKey（僅代轉發，不落地儲存）
+    // 🌟 直接從前端呼叫 Google Gemini API（無需修改 GAS，兼顧隱私與便利）
     async function autoFetchDetailsByAI() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
@@ -451,33 +452,50 @@
       
       if (!word) return alert("請先輸入英文單字！");
       if (!userApiKey) {
-        const inputKey = prompt("請輸入您的 OpenAI API Key（僅本次記憶體暫存，絕對不存入雲端資料庫）：");
+        const inputKey = prompt("請輸入您的 Gemini API Key（僅本次記憶體暫存，絕對不存入雲端資料庫）：");
         if (!inputKey) return;
         userApiKey = inputKey.trim();
       }
 
       btn.disabled = true;
-      btn.innerHTML = `<span class="spin-icon">⏳</span> AI 解析中...`;
-      msg.innerText = "⏳ 正在透過安全通道請求 AI 聚合...";
+      btn.innerHTML = `<span class="spin-icon">⏳</span> Gemini 解析中...`;
+      msg.innerText = "⏳ 正在請求 Google Gemini AI 聚合...";
       msg.style.color = "var(--primary)";
 
       try {
-        const res = await fetch(GAS_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "aiLookup", user: currentUser, word: word, apikey: userApiKey })
-        });
-        const result = await res.json();
+        const promptText = `請以高級英語辭典專家身分，針對英文單字 "${word}" 提供詳細解析，並嚴格按照以下 JSON 格式回傳（不要加上 markdown 程式碼區塊語法，直接回傳純 JSON）：
+        {
+          "pos": "精準詞性縮寫，例如 adv., n., v., adj.",
+          "meaning": "【音標】\\n【中文核心直譯】簡短精準的中文直譯\\n【多樣性釋義與詞性細節】\\n🔹 [詞性]\\n 1. 詳細中文解釋...",
+          "sentence": "• 真實母語例句 1\\n• 真實母語例句 2"
+        }`;
 
-        if (result.status === "success" && result.data) {
-          const parsed = result.data;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${userApiKey}`;
+        
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
+          })
+        });
+
+        if (!res.ok) throw new Error("Gemini API 請求失敗，請檢查 API Key 是否正確");
+        const json = await res.json();
+        
+        if (json.candidates && json.candidates.length > 0) {
+          let content = json.candidates[0].content.parts[0].text;
+          content = content.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+          const parsed = JSON.parse(content);
+
           document.getElementById("word-pos").value = parsed.pos || "n./v.";
           document.getElementById("word-meaning").value = parsed.meaning || "";
           document.getElementById("word-sentence").value = parsed.sentence || "";
-          msg.innerText = "✨ AI 智慧聚合成功！";
+          msg.innerText = "✨ Gemini 智慧聚合成功！";
           msg.style.color = "var(--success)";
         } else {
-          throw new Error(result.message || "AI 解析失敗");
+          throw new Error("AI 回應解析失敗");
         }
       } catch (err) {
         msg.innerText = `❌ 錯誤：${err.message}`;
@@ -723,7 +741,7 @@
       document.getElementById("quiz-result-box").classList.remove("hidden");
       const total = currentQuizQuestions.length;
       const correct = total - wrongAnswers.length;
-      document.getElementById("quiz-score-summary", `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`);
+      document.getElementById("quiz-score-summary").innerText = `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`;
 
       const wrongContainer = document.getElementById("wrong-words-container");
       wrongContainer.innerHTML = "";
