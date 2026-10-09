@@ -545,13 +545,31 @@
       }
     }
 
-    async function deleteWord(id) {
-      if (confirm("確定要刪除這個單字嗎？")) {
-        vocabData = vocabData.filter(i => String(i.id).trim() !== String(id).trim());
+        async function deleteWord(id) {
+      try {
+        console.log("準備刪除單字 ID:", id);
+        if (!confirm("確定要刪除這個單字嗎？")) return;
+
+        // 確保型別安全並過濾
+        const targetId = String(id).trim();
+        const beforeCount = vocabData.length;
+        
+        vocabData = vocabData.filter(i => String(i.id).trim() !== targetId);
+        
+        console.log(`刪除前數量: ${beforeCount}, 刪除後數量: ${vocabData.length}`);
+
+        // 重新渲染畫面
         renderWordList();
+        
+        // 嘗試同步到雲端
         await saveUserDataToCloud();
+        alert("刪除成功！");
+      } catch (err) {
+        console.error("刪除過程發生錯誤:", err);
+        alert("刪除時發生錯誤：" + err.message);
       }
     }
+
 
     async function toggleError(id) {
       const item = vocabData.find(i => String(i.id) === String(id));
