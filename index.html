@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VocabMaster - 雲端多源開源詞典整合版</title>
+  <title>VocabMaster - AI 智慧雲端單字庫</title>
   <style>
     :root {
       --primary: #6366f1;
@@ -90,7 +90,7 @@
 
   <header>
     <div style="display: flex; align-items: center; gap: 1rem;">
-      <h1>✨ VocabMaster</h1>
+      <h1>✨ VocabMaster AI</h1>
       <span id="sync-indicator" class="sync-status">就緒</span>
     </div>
     <div id="user-info" style="display: flex; align-items: center;">
@@ -101,10 +101,10 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊區塊 -->
+    <!-- 🔐 登入 / 註冊區塊 (包含 AI API Key 註冊設定) -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">獨立分頁雲端同步、多源開源詞庫高質量支援。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">透過個人 OpenAI / Gemini API Key 啟用高精度 AI 智慧詞性與釋義聚合。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -112,7 +112,18 @@
       </div>
       <div class="form-group">
         <label>密碼 (Password)</label>
-        <input type="password" id="auth-password" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter') handleAuth('login')" />
+        <input type="password" id="auth-password" placeholder="請輸入密碼" />
+      </div>
+      
+      <!-- 🌟 註冊時專屬的 AI API Key 輸入與引導 -->
+      <div id="register-api-box" class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 2px dashed var(--border); margin-top: 1rem;">
+        <label style="color: var(--primary);">🤖 AI API Key (註冊新帳號時必填)</label>
+        <input type="password" id="auth-apikey" placeholder="請輸入您的 OpenAI 或 Gemini API Key" style="margin-bottom: 0.5rem;" />
+        <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+          💡 哪裡取得免費 API Key？<br>
+          • OpenAI 使用者：至 <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--primary); font-weight: 600;">OpenAI API Keys</a> 建立免費帳號並產生金鑰。<br>
+          • Google Gemini 使用者：至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a> 免費取得金鑰。
+        </div>
       </div>
 
       <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -155,31 +166,31 @@
     <!-- ➕ 新增單字 -->
     <div id="add-tab" class="tab-content hidden">
       <div class="card">
-        <h2 style="margin-top:0; margin-bottom: 1.2rem;">➕ 新增單字與多源開源詞庫聚合</h2>
+        <h2 style="margin-top:0; margin-bottom: 1.2rem;">➕ AI 智慧聚合單字</h2>
         <form id="add-word-form" onsubmit="addWord(event)">
           <div class="form-group">
             <label>英文單字</label>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <input type="text" id="word-spelling" required placeholder="例如: try, ice, run" style="flex: 1; min-width: 180px;">
-              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetails()">⚡ 智慧聚合</button>
+              <input type="text" id="word-spelling" required placeholder="例如: perhaps, try, ice" style="flex: 1; min-width: 180px;">
+              <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetailsByAI()">🤖 AI 智慧解析</button>
               <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openQuickLookup()">🔍 劍橋</button>
             </div>
             <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;"></div>
           </div>
 
           <div class="form-group">
-            <label>主要詞性 (主標籤)</label>
-            <input type="text" id="word-pos" placeholder="例如: v., n." required>
+            <label>標準詞性 (如: adv., n., v.)</label>
+            <input type="text" id="word-pos" placeholder="例如: adv." required>
           </div>
 
           <div class="form-group">
-            <label>完整釋義與對應詞性</label>
-            <textarea id="word-meaning" rows="6" required placeholder="自動聚合後端高質量辭典與外部開源資料..."></textarea>
+            <label>中文核心直譯與多樣性釋義</label>
+            <textarea id="word-meaning" rows="6" required placeholder="【中文核心直譯】..."></textarea>
           </div>
 
           <div class="form-group">
-            <label>相關例句 (用於克漏字測驗)</label>
-            <textarea id="word-sentence" rows="4" placeholder="• 自動帶入真實母語例句..."></textarea>
+            <label>真實母語例句 (用於克漏字測驗)</label>
+            <textarea id="word-sentence" rows="4" placeholder="• 帶入真實例句..."></textarea>
           </div>
 
           <button type="submit" class="btn" style="width: 100%;">💾 儲存並同步至雲端專屬分頁</button>
@@ -260,6 +271,7 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
+    let userApiKey = "";
     let vocabData = [];
     let currentFilter = "all";
     let currentQuizType = "choice_en_zh";
@@ -268,45 +280,38 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
-    // 🌟 精準強化版詞性標準化（內建強制校正與完整副詞、形容詞對應）
-    function normalizePos(word, rawPos) {
-      const w = word ? word.toLowerCase().trim() : "";
-      if (w === "perhaps" || w === "maybe" || w === "often" || w === "always" || w === "never" || w === "just" || w === "still") return "adv.";
-      if (w === "try" || w === "run") return "v., n.";
-      if (w === "ice") return "n., v.";
-
-      if (!rawPos) return "n./v.";
-      const p = rawPos.toLowerCase();
-      if (p.includes("adverb") || p === "adv") return "adv.";
-      if (p.includes("adjective") || p === "adj") return "adj.";
-      if (p.includes("noun") || p === "n") return "n.";
-      if (p.includes("verb") || p === "v") return "v.";
-      if (p.includes("preposition") || p === "prep") return "prep.";
-      if (p.includes("conjunction") || p === "conj") return "conj.";
-      if (p.includes("pronoun") || p === "pron") return "pron.";
-      return rawPos;
-    }
-
-    // 🌟 嚴格過濾音標與標籤，只抓純中文釋義
-    function getCleanChineseMeaning(meaningStr) {
+    // 🌟 提取純中文核心直譯（確保測驗模式絕對只顯示乾淨直譯）
+    function getCoreChineseDirect(meaningStr) {
       if (!meaningStr) return "(無釋義)";
       const lines = meaningStr.split('\n');
       for (let line of lines) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.includes("【音標】") && !trimmed.includes("【中文核心直譯】") && !trimmed.includes("【詳細釋義】") && !trimmed.startsWith("🔹")) {
-          return trimmed.replace(/^\d+\.\s*/, '').replace(/【[^】]+】/g, '').trim();
+        if (line.includes("【中文核心直譯】")) {
+          return line.replace(/【[^】]+】/g, '').trim();
         }
       }
-      return (lines[0] || "").replace(/【[^】]+】/g, '').trim() || meaningStr;
+      for (let line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.includes("【") && !trimmed.startsWith("🔹")) {
+          return trimmed.replace(/^\d+\.\s*/, '').trim();
+        }
+      }
+      return lines[0] ? lines[0].replace(/【[^】]+】/g, '').trim() : meaningStr;
     }
 
     async function handleAuth(actionType) {
       const username = document.getElementById("auth-username").value.trim();
       const password = document.getElementById("auth-password").value.trim();
+      const apikey = document.getElementById("auth-apikey").value.trim();
       const msgBox = document.getElementById("auth-msg");
       
       if (!username || !password) {
         msgBox.innerText = "⚠️ 帳號與密碼皆不可空白！";
+        msgBox.style.color = "var(--danger)";
+        return;
+      }
+
+      if (actionType === 'register' && !apikey) {
+        msgBox.innerText = "⚠️ 註冊新帳號時請務必填入 AI API Key！";
         msgBox.style.color = "var(--danger)";
         return;
       }
@@ -318,16 +323,17 @@
         const res = await fetch(GAS_API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: actionType, user: username, password: password })
+          body: JSON.stringify({ action: actionType, user: username, password: password, apikey: apikey })
         });
         const result = await res.json();
 
         if (result.status === "success") {
           currentUser = username;
+          userApiKey = apikey || result.apikey || "";
           document.getElementById("current-user-display").innerText = `👤 ${currentUser}`;
           document.getElementById("auth-section").classList.add("hidden");
           document.getElementById("app-nav-wrapper").classList.remove("hidden");
-          if (actionType === "register") alert("註冊成功！系統已在 Google 試算表中為您建立專屬獨立分頁。");
+          if (actionType === "register") alert("註冊成功！系統已為您建立專屬獨立分頁。");
           await loadUserDataFromCloud();
           switchTab('list');
         } else {
@@ -342,6 +348,7 @@
 
     function logout() {
       currentUser = "";
+      userApiKey = "";
       vocabData = [];
       document.getElementById("current-user-display").innerText = "未登入";
       document.getElementById("auth-section").classList.remove("hidden");
@@ -349,6 +356,7 @@
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
       document.getElementById("auth-msg").innerText = "";
       document.getElementById("auth-password").value = "";
+      document.getElementById("auth-apikey").value = "";
     }
 
     async function loadUserDataFromCloud() {
@@ -356,7 +364,9 @@
       try {
         const res = await fetch(`${GAS_API_URL}?action=getData&user=${encodeURIComponent(currentUser)}&t=${Date.now()}`);
         if (!res.ok) throw new Error("HTTP Error");
-        vocabData = (await res.json()) || [];
+        const json = await res.json();
+        vocabData = json.data || json || [];
+        if (json.apikey) userApiKey = json.apikey;
         setSyncStatus(`✅ 已同步 ${vocabData.length} 字`);
       } catch (err) {
         setSyncStatus(`⚠️ 本機暫存`);
@@ -437,7 +447,8 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    async function autoFetchDetails() {
+    // 🌟 AI 智慧解析與詞性、釋義生成
+    async function autoFetchDetailsByAI() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
       const msg = document.getElementById("auto-fetch-msg");
@@ -445,90 +456,53 @@
       const originalText = btn.innerHTML;
       
       if (!word) return alert("請先輸入英文單字！");
+      if (!userApiKey) return alert("⚠️ 找不到您的 API Key，請重新登入或確認註冊時是否有填寫！");
 
       btn.disabled = true;
-      btn.innerHTML = `<span class="spin-icon">⏳</span> 檢索中...`;
-      msg.innerText = "⏳ 正在聚合高質量辭典與外部 API...";
+      btn.innerHTML = `<span class="spin-icon">⏳</span> AI 解析中...`;
+      msg.innerText = "⏳ 正在請求 AI 進行多樣性詞性與釋義聚合...";
       msg.style.color = "var(--primary)";
 
-      let phoneticStr = "";
-      let posSet = new Set();
-      let meaningBlocks = [];
-      let sentences = [];
-      let chineseTranslation = "";
-      let hasData = false;
+      try {
+        const prompt = `請以高級英語辭典專家身分，針對英文單字 "${word}" 提供詳細解析，並嚴格按照以下 JSON 格式回傳（不要加上 markdown 程式碼區塊語法，直接回傳純 JSON）：
+        {
+          "pos": "精準詞性縮寫，例如 adv., n., v., adj.",
+          "meaning": "【音標】\\n【中文核心直譯】簡短精準的中文直譯\\n【多樣性釋義與詞性細節】\\n🔹 [詞性]\\n 1. 詳細中文解釋...",
+          "sentence": "• 真實母語例句 1\\n• 真實母語例句 2"
+        }`;
 
-      const [backendResult, apiResult] = await Promise.allSettled([
-        fetch(`${GAS_API_URL}?action=lookup&word=${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null),
-        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`).then(res => res.ok ? res.json() : null)
-      ]);
+        let aiResultText = "";
 
-      if (backendResult.status === 'fulfilled' && backendResult.value && backendResult.value.status === "success") {
-        hasData = true;
-        const bData = backendResult.value;
-        if (bData.source === "core_dict" && bData.data) {
-          document.getElementById("word-pos").value = normalizePos(word, bData.data.pos);
-          document.getElementById("word-meaning").value = bData.data.meaning;
-          document.getElementById("word-sentence").value = bData.data.sentence;
-          msg.innerText = "✨ 成功從高質量核心詞庫帶入完整資料！";
-          msg.style.color = "var(--success)";
-          btn.disabled = false;
-          btn.innerHTML = originalText;
-          return;
-        } else if (bData.translation) {
-          chineseTranslation = bData.translation;
-        }
-      }
-
-      if (apiResult.status === 'fulfilled' && apiResult.value && apiResult.value.length > 0) {
-        hasData = true;
-        apiResult.value.forEach(entry => {
-          if (entry.phonetic && !phoneticStr) phoneticStr = entry.phonetic;
-          if (!phoneticStr && entry.phonetics) {
-            const pObj = entry.phonetics.find(p => p.text);
-            if (pObj) phoneticStr = pObj.text;
-          }
-
-          if (entry.meanings) {
-            entry.meanings.forEach(m => {
-              const p = m.partOfSpeech || "other";
-              posSet.add(p);
-              meaningBlocks.push(`🔹 [${normalizePos(word, p).toUpperCase()}]`);
-              if (m.definitions) {
-                m.definitions.forEach((d, idx) => {
-                  meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
-                  if (d.example && typeof d.example === 'string' && d.example.trim().length > 0) {
-                    sentences.push(`• ${d.example.trim()}`);
-                  }
-                });
-              }
-              meaningBlocks.push(""); 
-            });
-          }
+        // 支援 OpenAI 或 Gemini API 呼叫（預設優先採用 OpenAI 格式，亦可相容）
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${userApiKey}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.3
+          })
         });
-      }
 
-      if (hasData) {
-        let finalOutput = "";
-        if (phoneticStr) finalOutput += `【音標】 ${phoneticStr}\n\n`;
-        if (chineseTranslation) finalOutput += `【中文核心直譯】 ${chineseTranslation}\n\n`;
-        if (meaningBlocks.length > 0) {
-          finalOutput += `【詳細釋義】\n` + meaningBlocks.join("\n").trim();
-        }
-
-        const rawPosArr = [...posSet].map(p => normalizePos(word, p));
-        document.getElementById("word-pos").value = normalizePos(word, rawPosArr.join(", ")) || "n./v.";
-        document.getElementById("word-meaning").value = finalOutput.trim();
+        if (!res.ok) throw new Error("AI API 請求失敗，請檢查金鑰是否正確");
+        const json = await res.json();
+        aiResultText = json.choices[0].message.content.trim();
         
-        if (sentences.length > 0) {
-          document.getElementById("word-sentence").value = [...new Set(sentences)].slice(0, 3).join("\n");
-        } else {
-          document.getElementById("word-sentence").value = ""; 
-        }
-        msg.innerText = "✨ 智慧聚合成功！";
+        // 移除可能帶有的 markdown 標記
+        aiResultText = aiResultText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+        const parsed = JSON.parse(aiResultText);
+
+        document.getElementById("word-pos").value = parsed.pos || "n./v.";
+        document.getElementById("word-meaning").value = parsed.meaning || "";
+        document.getElementById("word-sentence").value = parsed.sentence || "";
+
+        msg.innerText = "✨ AI 智慧聚合成功！";
         msg.style.color = "var(--success)";
-      } else {
-        msg.innerText = "❌ 查無此單字，請透過劍橋字典查詢補充。";
+      } catch (err) {
+        msg.innerText = `❌ AI 解析失敗：${err.message}`;
         msg.style.color = "var(--danger)";
       }
 
@@ -592,7 +566,7 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){item.word}', '_blank');">🔍 劍橋</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
             <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
@@ -698,14 +672,14 @@
 
       if (currentQuizType === 'choice_en_zh') {
         document.getElementById("quiz-question-display").innerText = q.word;
-        document.getElementById("quiz-sub-prompt").innerText = `請從下方選出正確的含意與詞性（主詞性：${q.pos}）：`;
+        document.getElementById("quiz-sub-prompt").innerText = `請從下方選出正確的中文核心直譯（主詞性：${q.pos}）：`;
         optionsContainer.classList.remove("hidden"); 
         renderOptions(q, 'meaning');
       } 
       else if (currentQuizType === 'cloze') {
         let targetSentence = q.sentence ? q.sentence.replace(/^•\s*/, '') : "";
         if (!targetSentence) {
-          targetSentence = `(無例句) 釋義：${getCleanChineseMeaning(q.meaning)}`;
+          targetSentence = `(無例句) 釋義：${getCoreChineseDirect(q.meaning)}`;
         } else {
           const regex = new RegExp(`\\b${q.word}\\b`, 'gi');
           targetSentence = targetSentence.replace(regex, '( ________ )');
@@ -717,9 +691,9 @@
         renderOptions(q, 'word');
       } 
       else if (currentQuizType === 'spelling') {
-        // 🌟 拼字模式現在絕對只抓純中文釋義，不再顯示音標
-        const cleanMeaning = getCleanChineseMeaning(q.meaning);
-        document.getElementById("quiz-question-display").innerText = cleanMeaning;
+        // 🌟 拼字模式絕對只顯示中文核心直譯
+        const coreMeaning = getCoreChineseDirect(q.meaning);
+        document.getElementById("quiz-question-display").innerText = coreMeaning;
         document.getElementById("quiz-sub-prompt").innerText = `請拼寫對應的英文單字 (首字母: ${q.word[0].toUpperCase()})`;
         inputContainer.classList.remove("hidden");
         document.getElementById("quiz-type-input").value = "";
@@ -741,7 +715,8 @@
         let displayText = opt[key];
         
         if (key === 'meaning') {
-          displayText = getCleanChineseMeaning(opt.meaning);
+          // 確保選項只出現「中文核心直譯」
+          displayText = getCoreChineseDirect(opt.meaning);
         }
         
         btn.innerText = displayText;
@@ -769,7 +744,7 @@
 
     function finishQuiz() {
       document.getElementById("quiz-running-box").classList.add("hidden");
-      document.getElementById("quiz-result-box").classList.remove("hidden");
+      document.getElementById("quiz-result-box").classList.add("hidden");
       const total = currentQuizQuestions.length;
       const correct = total - wrongAnswers.length;
       document.getElementById("quiz-score-summary").innerText = `🎯 測驗得分：${correct} / ${total} (正確率: ${Math.round(correct/total * 100)}%)`;
