@@ -101,10 +101,10 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊區塊 -->
+    <!-- 🔐 登入 / 註冊與 API Key 設定區塊 -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">透過 Google Gemini API 啟用高精度 AI 智慧聚合，金鑰僅暫存於記憶體，<strong>絕不儲存於後端資料庫</strong>。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（安全存於瀏覽器 localStorage，絕不上傳後端），解鎖 AI 智慧聚合與精準詞性解析。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -115,11 +115,11 @@
         <input type="password" id="auth-password" placeholder="請輸入密碼" />
       </div>
       
-      <div id="register-api-box" class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 2px dashed var(--border); margin-top: 1rem;">
-        <label style="color: var(--primary);">🤖 Google Gemini API Key (僅本次暫存)</label>
+      <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 2px dashed var(--border); margin-top: 1rem;">
+        <label style="color: var(--primary);">🤖 Gemini API Key (BYOK)</label>
         <input type="password" id="auth-apikey" placeholder="請輸入您的 Gemini API Key (AIza...)" style="margin-bottom: 0.5rem;" />
         <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
-          💡 如何免費取得 Gemini API Key？<br>
+          💡 哪裡取得免費 API Key？<br>
           • 請至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a> 登入並免費建立金鑰。
         </div>
       </div>
@@ -268,7 +268,7 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbymR8c6h4xwX86URT58-eCV7anyu6z8kW29uky1dqQCqliKe_4KLZ0MvrFFLZ6hxZ-z/exec";
 
     let currentUser = "";
-    let userApiKey = ""; // 僅暫存於記憶體，絕不上傳雲端
+    let userApiKey = "";
     let vocabData = [];
     let currentFilter = "all";
     let currentQuizType = "choice_en_zh";
@@ -276,6 +276,15 @@
     let currentQuizQuestions = [];
     let wrongAnswers = [];
     let lastDeletedItem = null;
+
+    // 頁面載入時嘗試從 localStorage 恢復 API Key
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem("vocab_gemini_apikey");
+      if (savedKey) {
+        document.getElementById("auth-apikey").value = savedKey;
+        userApiKey = savedKey;
+      }
+    });
 
     // 🌟 提取純中文核心直譯（確保測驗模式絕對只顯示乾淨直譯）
     function getCoreChineseDirect(meaningStr) {
@@ -326,7 +335,10 @@
 
         if (result.status === "success") {
           currentUser = username;
-          userApiKey = apikey; // 暫存在本地記憶體
+          if (apikey) {
+            userApiKey = apikey;
+            localStorage.setItem("vocab_gemini_apikey", apikey);
+          }
           document.getElementById("current-user-display").innerText = `👤 ${currentUser}`;
           document.getElementById("auth-section").classList.add("hidden");
           document.getElementById("app-nav-wrapper").classList.remove("hidden");
@@ -345,7 +357,6 @@
 
     function logout() {
       currentUser = "";
-      userApiKey = "";
       vocabData = [];
       document.getElementById("current-user-display").innerText = "未登入";
       document.getElementById("auth-section").classList.remove("hidden");
@@ -353,7 +364,6 @@
       document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
       document.getElementById("auth-msg").innerText = "";
       document.getElementById("auth-password").value = "";
-      document.getElementById("auth-apikey").value = "";
     }
 
     async function loadUserDataFromCloud() {
@@ -442,7 +452,7 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🌟 直接從前端呼叫 Google Gemini API（無需修改 GAS，兼顧隱私與便利）
+    // 🌟 採用你之前成功的純前端 Gemini 2.5-flash API 呼叫模式
     async function autoFetchDetailsByAI() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
@@ -451,52 +461,58 @@
       const originalText = btn.innerHTML;
       
       if (!word) return alert("請先輸入英文單字！");
+      
       if (!userApiKey) {
-        const inputKey = prompt("請輸入您的 Gemini API Key（僅本次記憶體暫存，絕對不存入雲端資料庫）：");
-        if (!inputKey) return;
+        const inputKey = document.getElementById("auth-apikey").value.trim() || prompt("請輸入您的 Gemini API Key：");
+        if (!inputKey) return alert("需要 API Key 才能使用 AI 智慧解析！");
         userApiKey = inputKey.trim();
+        localStorage.setItem("vocab_gemini_apikey", userApiKey);
       }
 
       btn.disabled = true;
       btn.innerHTML = `<span class="spin-icon">⏳</span> Gemini 解析中...`;
-      msg.innerText = "⏳ 正在請求 Google Gemini AI 聚合...";
+      msg.innerText = "⏳ 正在透過前端安全通道請求 Gemini...";
       msg.style.color = "var(--primary)";
 
       try {
-        const promptText = `請以高級英語辭典專家身分，針對英文單字 "${word}" 提供詳細解析，並嚴格按照以下 JSON 格式回傳（不要加上 markdown 程式碼區塊語法，直接回傳純 JSON）：
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userApiKey}`;
+        
+        const systemPrompt = `請以高級英語辭典專家身分，針對英文單字 "${word}" 提供詳細解析，並嚴格以 JSON 格式回傳（不得包含 markdown 程式碼區塊標記，直接輸出純 JSON 字串）：
         {
           "pos": "精準詞性縮寫，例如 adv., n., v., adj.",
           "meaning": "【音標】\\n【中文核心直譯】簡短精準的中文直譯\\n【多樣性釋義與詞性細節】\\n🔹 [詞性]\\n 1. 詳細中文解釋...",
           "sentence": "• 真實母語例句 1\\n• 真實母語例句 2"
         }`;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${userApiKey}`;
-        
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
-          })
+        const bodyData = {
+          contents: [{ 
+            parts: [
+              { text: systemPrompt }
+            ] 
+          }],
+          generationConfig: { 
+            response_mime_type: "application/json",
+            temperature: 0.3
+          }
+        };
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyData)
         });
 
-        if (!res.ok) throw new Error("Gemini API 請求失敗，請檢查 API Key 是否正確");
-        const json = await res.json();
-        
-        if (json.candidates && json.candidates.length > 0) {
-          let content = json.candidates[0].content.parts[0].text;
-          content = content.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-          const parsed = JSON.parse(content);
+        if (!response.ok) throw new Error("API 請求失敗，請確認 API Key 是否正確");
 
-          document.getElementById("word-pos").value = parsed.pos || "n./v.";
-          document.getElementById("word-meaning").value = parsed.meaning || "";
-          document.getElementById("word-sentence").value = parsed.sentence || "";
-          msg.innerText = "✨ Gemini 智慧聚合成功！";
-          msg.style.color = "var(--success)";
-        } else {
-          throw new Error("AI 回應解析失敗");
-        }
+        const data = await response.json();
+        const finalJson = JSON.parse(data.candidates[0].content.parts[0].text);
+
+        document.getElementById("word-pos").value = finalJson.pos || "n./v.";
+        document.getElementById("word-meaning").value = finalJson.meaning || "";
+        document.getElementById("word-sentence").value = finalJson.sentence || "";
+
+        msg.innerText = "✨ Gemini 智慧聚合成功！";
+        msg.style.color = "var(--success)";
       } catch (err) {
         msg.innerText = `❌ 錯誤：${err.message}`;
         msg.style.color = "var(--danger)";
@@ -562,7 +578,7 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){item.word}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${item.word}', '_blank');">🔍 劍橋</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
             <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
