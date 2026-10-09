@@ -268,6 +268,20 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
+    // 🌟 詞性標準化轉換函式（自動把雜亂英文轉成標準中文詞性縮寫）
+    function normalizePos(rawPos) {
+      if (!rawPos) return "n./v.";
+      const p = rawPos.toLowerCase();
+      if (p.includes("noun") || p === "n") return "n.";
+      if (p.includes("verb") || p === "v") return "v.";
+      if (p.includes("adjective") || p === "adj") return "adj.";
+      if (p.includes("adverb") || p === "adv") return "adv.";
+      if (p.includes("preposition") || p === "prep") return "prep.";
+      if (p.includes("conjunction") || p === "conj") return "conj.";
+      if (p.includes("pronoun") || p === "pron") return "pron.";
+      return rawPos;
+    }
+
     async function handleAuth(actionType) {
       const username = document.getElementById("auth-username").value.trim();
       const password = document.getElementById("auth-password").value.trim();
@@ -294,7 +308,7 @@
           currentUser = username;
           document.getElementById("current-user-display").innerText = `👤 ${currentUser}`;
           document.getElementById("auth-section").classList.add("hidden");
-          document.getElementById("app-nav-wrapper").classList.remove("hidden"); // 關鍵修復：解鎖導覽與進度條
+          document.getElementById("app-nav-wrapper").classList.remove("hidden");
           if (actionType === "register") alert("註冊成功！系統已在 Google 試算表中為您建立專屬獨立分頁。");
           await loadUserDataFromCloud();
           switchTab('list');
@@ -435,7 +449,7 @@
         hasData = true;
         const bData = backendResult.value;
         if (bData.source === "core_dict" && bData.data) {
-          document.getElementById("word-pos").value = bData.data.pos;
+          document.getElementById("word-pos").value = normalizePos(bData.data.pos);
           document.getElementById("word-meaning").value = bData.data.meaning;
           document.getElementById("word-sentence").value = bData.data.sentence;
           msg.innerText = "✨ 成功從高質量核心詞庫帶入完整資料！";
@@ -461,7 +475,7 @@
             entry.meanings.forEach(m => {
               const p = m.partOfSpeech || "other";
               posSet.add(p);
-              meaningBlocks.push(`🔹 [${p.toUpperCase()}]`);
+              meaningBlocks.push(`🔹 [${normalizePos(p).toUpperCase()}]`);
               if (m.definitions) {
                 m.definitions.forEach((d, idx) => {
                   meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
@@ -484,8 +498,10 @@
           finalOutput += `【詳細釋義】\n` + meaningBlocks.join("\n").trim();
         }
 
-        document.getElementById("word-pos").value = [...posSet].join(", ") || "n./v.";
+        const rawPosArr = [...posSet].map(normalizePos);
+        document.getElementById("word-pos").value = rawPosArr.join(", ") || "n./v.";
         document.getElementById("word-meaning").value = finalOutput.trim();
+        
         if (sentences.length > 0) {
           document.getElementById("word-sentence").value = [...new Set(sentences)].slice(0, 3).join("\n");
         } else {
@@ -692,6 +708,7 @@
       }
     }
 
+    // 🌟 修正測驗選項：強制只顯示乾淨的中文含意，不再出現冗長英文定義
     function renderOptions(q, key) {
       let options = [q];
       let others = vocabData.filter(i => String(i.id) !== String(q.id)).sort(() => 0.5 - Math.random());
@@ -704,9 +721,14 @@
         const btn = document.createElement("button");
         btn.className = "option-btn";
         let displayText = opt[key];
+        
         if (key === 'meaning') {
-          displayText = opt.meaning.split('\n').slice(0, 3).join('\n');
+          const lines = opt.meaning.split('\n');
+          const cnLine = lines.find(l => l.includes("【中文核心直譯】") || l.includes("直譯")) || lines[0] || opt.meaning;
+          displayText = cnLine.replace(/【[^】]+】/g, '').trim();
+          if (!displayText) displayText = opt.meaning.split('\n')[0];
         }
+        
         btn.innerText = displayText;
         btn.onclick = () => { checkAnswer(String(opt.id) === String(q.id), q); };
         container.appendChild(btn);
