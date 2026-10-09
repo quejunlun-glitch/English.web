@@ -268,18 +268,36 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
-    // 🌟 詞性標準化轉換函式（自動把雜亂英文轉成標準中文詞性縮寫）
-    function normalizePos(rawPos) {
+    // 🌟 精準強化版詞性標準化（內建強制校正與完整副詞、形容詞對應）
+    function normalizePos(word, rawPos) {
+      const w = word ? word.toLowerCase().trim() : "";
+      if (w === "perhaps" || w === "maybe" || w === "often" || w === "always" || w === "never" || w === "just" || w === "still") return "adv.";
+      if (w === "try" || w === "run") return "v., n.";
+      if (w === "ice") return "n., v.";
+
       if (!rawPos) return "n./v.";
       const p = rawPos.toLowerCase();
+      if (p.includes("adverb") || p === "adv") return "adv.";
+      if (p.includes("adjective") || p === "adj") return "adj.";
       if (p.includes("noun") || p === "n") return "n.";
       if (p.includes("verb") || p === "v") return "v.";
-      if (p.includes("adjective") || p === "adj") return "adj.";
-      if (p.includes("adverb") || p === "adv") return "adv.";
       if (p.includes("preposition") || p === "prep") return "prep.";
       if (p.includes("conjunction") || p === "conj") return "conj.";
       if (p.includes("pronoun") || p === "pron") return "pron.";
       return rawPos;
+    }
+
+    // 🌟 嚴格過濾音標與標籤，只抓純中文釋義
+    function getCleanChineseMeaning(meaningStr) {
+      if (!meaningStr) return "(無釋義)";
+      const lines = meaningStr.split('\n');
+      for (let line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.includes("【音標】") && !trimmed.includes("【中文核心直譯】") && !trimmed.includes("【詳細釋義】") && !trimmed.startsWith("🔹")) {
+          return trimmed.replace(/^\d+\.\s*/, '').replace(/【[^】]+】/g, '').trim();
+        }
+      }
+      return (lines[0] || "").replace(/【[^】]+】/g, '').trim() || meaningStr;
     }
 
     async function handleAuth(actionType) {
@@ -449,7 +467,7 @@
         hasData = true;
         const bData = backendResult.value;
         if (bData.source === "core_dict" && bData.data) {
-          document.getElementById("word-pos").value = normalizePos(bData.data.pos);
+          document.getElementById("word-pos").value = normalizePos(word, bData.data.pos);
           document.getElementById("word-meaning").value = bData.data.meaning;
           document.getElementById("word-sentence").value = bData.data.sentence;
           msg.innerText = "✨ 成功從高質量核心詞庫帶入完整資料！";
@@ -475,7 +493,7 @@
             entry.meanings.forEach(m => {
               const p = m.partOfSpeech || "other";
               posSet.add(p);
-              meaningBlocks.push(`🔹 [${normalizePos(p).toUpperCase()}]`);
+              meaningBlocks.push(`🔹 [${normalizePos(word, p).toUpperCase()}]`);
               if (m.definitions) {
                 m.definitions.forEach((d, idx) => {
                   meaningBlocks.push(`  ${idx + 1}. ${d.definition}`);
@@ -498,8 +516,8 @@
           finalOutput += `【詳細釋義】\n` + meaningBlocks.join("\n").trim();
         }
 
-        const rawPosArr = [...posSet].map(normalizePos);
-        document.getElementById("word-pos").value = rawPosArr.join(", ") || "n./v.";
+        const rawPosArr = [...posSet].map(p => normalizePos(word, p));
+        document.getElementById("word-pos").value = normalizePos(word, rawPosArr.join(", ")) || "n./v.";
         document.getElementById("word-meaning").value = finalOutput.trim();
         
         if (sentences.length > 0) {
@@ -687,7 +705,7 @@
       else if (currentQuizType === 'cloze') {
         let targetSentence = q.sentence ? q.sentence.replace(/^•\s*/, '') : "";
         if (!targetSentence) {
-          targetSentence = `(無例句) 釋義：${q.meaning.split('\n')[0]}`;
+          targetSentence = `(無例句) 釋義：${getCleanChineseMeaning(q.meaning)}`;
         } else {
           const regex = new RegExp(`\\b${q.word}\\b`, 'gi');
           targetSentence = targetSentence.replace(regex, '( ________ )');
@@ -699,8 +717,9 @@
         renderOptions(q, 'word');
       } 
       else if (currentQuizType === 'spelling') {
-        const firstLine = q.meaning.split('\n')[0];
-        document.getElementById("quiz-question-display").innerText = firstLine;
+        // 🌟 拼字模式現在絕對只抓純中文釋義，不再顯示音標
+        const cleanMeaning = getCleanChineseMeaning(q.meaning);
+        document.getElementById("quiz-question-display").innerText = cleanMeaning;
         document.getElementById("quiz-sub-prompt").innerText = `請拼寫對應的英文單字 (首字母: ${q.word[0].toUpperCase()})`;
         inputContainer.classList.remove("hidden");
         document.getElementById("quiz-type-input").value = "";
@@ -708,7 +727,6 @@
       }
     }
 
-    // 🌟 修正測驗選項：強制只顯示乾淨的中文含意，不再出現冗長英文定義
     function renderOptions(q, key) {
       let options = [q];
       let others = vocabData.filter(i => String(i.id) !== String(q.id)).sort(() => 0.5 - Math.random());
@@ -723,10 +741,7 @@
         let displayText = opt[key];
         
         if (key === 'meaning') {
-          const lines = opt.meaning.split('\n');
-          const cnLine = lines.find(l => l.includes("【中文核心直譯】") || l.includes("直譯")) || lines[0] || opt.meaning;
-          displayText = cnLine.replace(/【[^】]+】/g, '').trim();
-          if (!displayText) displayText = opt.meaning.split('\n')[0];
+          displayText = getCleanChineseMeaning(opt.meaning);
         }
         
         btn.innerText = displayText;
