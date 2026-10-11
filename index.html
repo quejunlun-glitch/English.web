@@ -171,7 +171,7 @@
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <input type="text" id="word-spelling" required placeholder="例如: perhaps, try, ice" style="flex: 1; min-width: 180px;">
               <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetailsByAI()">🤖 AI 智慧解析</button>
-              <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/' + encodeURIComponent('${item.word.toLowerCase().trim()}'), '_blank');">🔍 劍橋</button>
+              <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openCambridgeLookup(document.getElementById('word-spelling').value)">🔍 劍橋</button>
             </div>
             <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;">💡 提示：若第一次請求因網路抖動未回應，請再點一次「AI 智慧解析」即可成功！</div>
           </div>
@@ -277,7 +277,24 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
-    // 🌟 提取純中文核心直譯（確保測驗模式絕對只顯示乾淨直譯）
+    // 🌟 獨立且標準的劍橋字典查詢專用函式 (確保所有地方呼叫都 100% 一致且正確)
+    function openCambridgeLookup(wordValue) {
+      const cleanWord = (wordValue || "").trim().toLowerCase();
+      if (!cleanWord) {
+        alert("請先輸入英文單字！");
+        return;
+      }
+      const targetUrl = `https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(cleanWord)}`;
+      window.open(targetUrl, '_blank');
+    }
+
+    // 保持相容性別名函式
+    function openQuickLookup() {
+      const wordInput = document.getElementById("word-spelling").value;
+      openCambridgeLookup(wordInput);
+    }
+
+    // 🌟 提取純中文核心直譯
     function getCoreChineseDirect(meaningStr) {
       if (!meaningStr) return "(無釋義)";
       const lines = meaningStr.split('\n');
@@ -436,12 +453,6 @@
       }
     }
 
-    function openQuickLookup() {
-      const word = document.getElementById("word-spelling").value.trim().toLowerCase();
-      if (!word) return alert("請先輸入英文單字！");
-      window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
-    }
-
     // 🌟 帶有自動重試機制的 Gemini 3.5-flash AI 呼叫
     async function autoFetchDetailsByAI() {
       const wordInput = document.getElementById("word-spelling");
@@ -564,6 +575,9 @@
         const card = document.createElement("div");
         card.className = `word-card ${item.isError ? 'error-marked' : ''}`;
         
+        // 確保帶入劍橋字典的單字乾淨無誤
+        const safeWordForBtn = (item.word || "").replace(/'/g, "\\'");
+
         card.innerHTML = `
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
             <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a;">
@@ -576,7 +590,7 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/)' + encodeURIComponent('${item.word.toLowerCase().trim()}'), '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openCambridgeLookup('${safeWordForBtn}')">🔍 劍橋</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
             <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
