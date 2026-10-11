@@ -576,7 +576,7 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){encodeURIComponent(item.word.toLowerCase())}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){encodeURIComponent(item.word.toLowerCase().trim())}', '_blank');">🔍 劍橋</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
             <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
@@ -660,7 +660,6 @@
     }
 
     function startQuiz() {
-      // 🌟 過濾掉資料不全（如意義空白或未解析完成）的單字，避免測驗出現空白
       const validVocab = vocabData.filter(item => item.word && item.meaning && item.meaning.trim() !== "");
       
       if (validVocab.length < 2) return alert("單字庫中至少需要有 2 個內容完整的單字才能開始測驗！");
