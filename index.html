@@ -101,10 +101,10 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊區塊 (附帶 API Key 取得指引與記憶體暫存) -->
+    <!-- 🔐 登入 / 註冊區塊 (金鑰僅暫存於記憶體) -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，絕不寫入資料庫或長期儲存）。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，絕不寫入 localStorage）。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -442,7 +442,7 @@
       window.open(`https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(word)}`, '_blank');
     }
 
-    // 🌟 採用你驗證成功、使用 gemini-3.5-flash 的穩定 AI 呼叫模式
+    // 🌟 帶有自動重試機制的 Gemini 3.5-flash AI 呼叫
     async function autoFetchDetailsByAI() {
       const wordInput = document.getElementById("word-spelling");
       const word = wordInput.value.trim().toLowerCase();
@@ -463,55 +463,58 @@
       msg.innerText = "⏳ 正在請求 Gemini 3.5 Flash...";
       msg.style.color = "var(--primary)";
 
-      try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${userApiKey}`;
-        
-        const systemPrompt = `請以高級英語辭典專家身分，針對英文單字 "${word}" 提供詳細解析，並嚴格以 JSON 格式回傳（不得包含 markdown 程式碼區塊標記，直接輸出純 JSON 字串）：
-        {
-          "pos": "精準詞性縮寫，例如 adv., n., v., adj.",
-          "meaning": "【音標】\\n【中文核心直譯】簡短精準的中文直譯\\n【多樣性釋義與詞性細節】\\n🔹 [詞性]\\n 1. 詳細中文解釋...",
-          "sentence": "• 真實母語例句 1\\n• 真實母語例句 2"
-        }`;
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${userApiKey}`;
+      const systemPrompt = `請以高級英語辭典專家身分，針對英文單字 "${word}" 提供詳細解析，並嚴格以 JSON 格式回傳（不得包含 markdown 程式碼區塊標記，直接輸出純 JSON 字串）：
+      {
+        "pos": "精準詞性縮寫，例如 adv., n., v., adj.",
+        "meaning": "【音標】\\n【中文核心直譯】簡短精準的中文直譯\\n【多樣性釋義與詞性細節】\\n🔹 [詞性]\\n 1. 詳細中文解釋...",
+        "sentence": "• 真實母語例句 1\\n• 真實母語例句 2"
+      }`;
 
-        const bodyData = {
-          contents: [{ 
-            parts: [
-              { text: systemPrompt }
-            ] 
-          }],
-          generationConfig: { 
-            response_mime_type: "application/json",
-            temperature: 0.3
+      const bodyData = {
+        contents: [{ parts: [{ text: systemPrompt }] }],
+        generationConfig: { response_mime_type: "application/json", temperature: 0.3 }
+      };
+
+      let success = false;
+      let finalJson = null;
+
+      // 嘗試兩次（自動重試機制，克服偶發網路抖動）
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          if (attempt === 2) {
+            msg.innerText = "🔄 網路連線重試中 (第 2 次)...";
           }
-        };
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyData)
+          });
 
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyData)
-        });
+          if (!response.ok) throw new Error("API 回應狀態異常");
 
-        if (!response.ok) throw new Error("API 請求失敗，請確認 API Key 是否正確");
-
-        const data = await response.json();
-        
-        if (data.candidates && data.candidates.length > 0) {
-          let rawText = data.candidates[0].content.parts[0].text;
-          rawText = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-          const finalJson = JSON.parse(rawText);
-
-          document.getElementById("word-pos").value = finalJson.pos || "n./v.";
-          document.getElementById("word-meaning").value = finalJson.meaning || "";
-          document.getElementById("word-sentence").value = finalJson.sentence || "";
-
-          msg.innerText = "✨ Gemini 智慧聚合成功！";
-          msg.style.color = "var(--success)";
-        } else {
-          throw new Error("AI 未能回傳有效資料");
+          const data = await response.json();
+          if (data.candidates && data.candidates.length > 0) {
+            let rawText = data.candidates[0].content.parts[0].text;
+            rawText = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+            finalJson = JSON.parse(rawText);
+            success = true;
+            break;
+          }
+        } catch (err) {
+          if (attempt === 2) {
+            msg.innerText = `❌ 錯誤：多次請求失敗，請再點一次按鈕或檢查 API Key`;
+            msg.style.color = "var(--danger)";
+          }
         }
-      } catch (err) {
-        msg.innerText = `❌ 錯誤：${err.message}`;
-        msg.style.color = "var(--danger)";
+      }
+
+      if (success && finalJson) {
+        document.getElementById("word-pos").value = finalJson.pos || "n./v.";
+        document.getElementById("word-meaning").value = finalJson.meaning || "";
+        document.getElementById("word-sentence").value = finalJson.sentence || "";
+        msg.innerText = "✨ Gemini 智慧聚合成功！";
+        msg.style.color = "var(--success)";
       }
 
       btn.disabled = false;
@@ -574,7 +577,7 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){item.word}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){encodeURIComponent(item.word)}', '_blank');">🔍 劍橋</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
             <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
