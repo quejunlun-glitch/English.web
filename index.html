@@ -277,14 +277,14 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
-    // 🌟 採用指定格式的劍橋字典查詢專用函式
+    // 🌟 採用完全正確結構的劍橋字典查詢專用函式
     function openCambridgeLookup(wordValue) {
       const cleanWord = (wordValue || "").trim().toLowerCase();
       if (!cleanWord) {
         alert("請先輸入英文單字！");
         return;
       }
-      const targetUrl = `https://dictionary.cambridge.org/zht/英語-漢語-繁體/${encodeURIComponent(cleanWord)}`;
+      const targetUrl = `https://dictionary.cambridge.org/zht/詞典/英語-漢語-繁體/${encodeURIComponent(cleanWord)}`;
       window.open(targetUrl, '_blank');
     }
 
