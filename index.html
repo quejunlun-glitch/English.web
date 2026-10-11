@@ -277,14 +277,14 @@
     let wrongAnswers = [];
     let lastDeletedItem = null;
 
-    // 🌟 獨立且標準的劍橋字典查詢專用函式 (確保所有地方呼叫都 100% 一致且正確)
+    // 🌟 採用指定格式的劍橋字典查詢專用函式
     function openCambridgeLookup(wordValue) {
       const cleanWord = (wordValue || "").trim().toLowerCase();
       if (!cleanWord) {
         alert("請先輸入英文單字！");
         return;
       }
-      const targetUrl = `https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/${encodeURIComponent(cleanWord)}`;
+      const targetUrl = `https://dictionary.cambridge.org/zht/英語-漢語-繁體/${encodeURIComponent(cleanWord)}`;
       window.open(targetUrl, '_blank');
     }
 
@@ -575,7 +575,6 @@
         const card = document.createElement("div");
         card.className = `word-card ${item.isError ? 'error-marked' : ''}`;
         
-        // 確保帶入劍橋字典的單字乾淨無誤
         const safeWordForBtn = (item.word || "").replace(/'/g, "\\'");
 
         card.innerHTML = `
