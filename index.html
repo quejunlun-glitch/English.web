@@ -101,10 +101,10 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊區塊 (金鑰僅暫存於記憶體) -->
+    <!-- 🔐 登入 / 註冊區塊 (附帶 API Key 取得指引與記憶體暫存) -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，絕不寫入 localStorage）。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，絕不寫入資料庫或長期儲存）。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -118,6 +118,10 @@
       <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: 12px; border: 2px dashed var(--border); margin-top: 1rem;">
         <label style="color: var(--primary);">🤖 Gemini API Key (記憶體暫存)</label>
         <input type="password" id="auth-apikey" placeholder="請輸入您的 Gemini API Key (AQ... 或 AIza...)" style="margin-bottom: 0.5rem;" />
+        <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+          💡 如何免費取得 Gemini API Key？<br>
+          • 請至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a> 登入並免費建立金鑰。
+        </div>
       </div>
 
       <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
