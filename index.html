@@ -101,7 +101,7 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊區塊 (金鑰僅暫存於記憶體) -->
+    <!-- 🔐 登入 / 註冊區塊 -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
       <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，絕不寫入 localStorage）。</p>
@@ -173,7 +173,7 @@
               <button type="button" id="auto-fetch-btn" class="btn btn-secondary" style="white-space: nowrap;" onclick="autoFetchDetailsByAI()">🤖 AI 智慧解析</button>
               <button type="button" class="btn btn-secondary" style="white-space: nowrap;" onclick="openQuickLookup()">🔍 劍橋</button>
             </div>
-            <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;"></div>
+            <div id="auto-fetch-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;">💡 提示：若第一次請求因網路抖動未回應，請再點一次「AI 智慧解析」即可成功！</div>
           </div>
 
           <div class="form-group">
@@ -479,7 +479,6 @@
       let success = false;
       let finalJson = null;
 
-      // 嘗試兩次（自動重試機制，克服偶發網路抖動）
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           if (attempt === 2) {
@@ -577,7 +576,7 @@
           ${item.sentence ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.8rem; border-left: 2px solid #cbd5e1; padding-left: 0.5rem; white-space: pre-wrap;">${item.sentence}</div>` : ''}
           
           <div style="margin-top: 1.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){encodeURIComponent(item.word)}', '_blank');">🔍 劍橋</button>
+            <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="window.open('[https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$](https://dictionary.cambridge.org/zht/dictionary/english-chinese-traditional/$){encodeURIComponent(item.word.toLowerCase())}', '_blank');">🔍 劍橋</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="openEditModal('${item.id}');">✏️ 編輯</button>
             <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="toggleError('${item.id}');">${item.isError ? '解標' : '易錯'}</button>
             <button type="button" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-left: auto;" onclick="deleteWordDirect('${item.id}')">🗑️ 刪除</button>
@@ -661,8 +660,12 @@
     }
 
     function startQuiz() {
-      if (vocabData.length < 2) return alert("單字庫至少需要有 2 個單字才能開始測驗！");
-      currentQuizQuestions = [...vocabData].sort(() => 0.5 - Math.random()).slice(0, 5);
+      // 🌟 過濾掉資料不全（如意義空白或未解析完成）的單字，避免測驗出現空白
+      const validVocab = vocabData.filter(item => item.word && item.meaning && item.meaning.trim() !== "");
+      
+      if (validVocab.length < 2) return alert("單字庫中至少需要有 2 個內容完整的單字才能開始測驗！");
+      
+      currentQuizQuestions = [...validVocab].sort(() => 0.5 - Math.random()).slice(0, 5);
       currentQuizIndex = 0; 
       wrongAnswers = [];
       document.getElementById("quiz-start-box").classList.add("hidden");
@@ -683,7 +686,7 @@
 
       if (currentQuizType === 'choice_en_zh') {
         document.getElementById("quiz-question-display").innerText = q.word;
-        document.getElementById("quiz-sub-prompt").innerText = `請從下方選出正確的中文核心直譯（主詞性：${q.pos}）：`;
+        document.getElementById("quiz-sub-prompt").innerText = `請從下方選出正確的中文核心直譯（主詞性：${q.pos || 'n.'}）：`;
         optionsContainer.classList.remove("hidden"); 
         renderOptions(q, 'meaning');
       } 
@@ -713,8 +716,11 @@
 
     function renderOptions(q, key) {
       let options = [q];
-      let others = vocabData.filter(i => String(i.id) !== String(q.id)).sort(() => 0.5 - Math.random());
-      while (options.length < Math.min(4, vocabData.length)) options.push(others.pop());
+      let others = vocabData.filter(i => String(i.id) !== String(q.id) && i.meaning && i.meaning.trim() !== "").sort(() => 0.5 - Math.random());
+      while (options.length < Math.min(4, vocabData.length)) {
+        if (others.length > 0) options.push(others.pop());
+        else break;
+      }
       options.sort(() => 0.5 - Math.random());
 
       const container = document.getElementById("quiz-options-container");
