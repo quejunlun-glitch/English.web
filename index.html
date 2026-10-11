@@ -101,10 +101,10 @@
 
   <div class="container">
     
-    <!-- 🔐 登入 / 註冊區塊 (金鑰僅暫存於記憶體，絕不寫入 localStorage) -->
+    <!-- 🔐 登入 / 註冊區塊 (金鑰僅暫存於記憶體) -->
     <div id="auth-section" class="card">
       <h2 style="margin-top:0; color: #1e293b; font-size: 1.5rem;">🔐 雲端單字庫登入</h2>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，安全有保障）。</p>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">輸入您的 Gemini API Key（僅暫存於本次瀏覽器記憶體，絕不寫入 localStorage）。</p>
       
       <div class="form-group">
         <label>帳號 (Account)</label>
@@ -449,7 +449,7 @@
       if (!word) return alert("請先輸入英文單字！");
       
       if (!userApiKey) {
-        const inputKey = prompt("請輸入您的 Gemini API Key（僅本次記憶體暫存）：");
+        const inputKey = document.getElementById("auth-apikey").value.trim() || prompt("請輸入您的 Gemini API Key（僅本次記憶體暫存）：");
         if (!inputKey) return alert("需要 API Key 才能使用 AI 智慧解析！");
         userApiKey = inputKey.trim();
       }
